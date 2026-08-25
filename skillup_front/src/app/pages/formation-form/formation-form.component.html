@@ -1,0 +1,60 @@
+<div class="container py-4">
+  <div class="d-flex align-items-center mb-4">
+    <a routerLink="/formations" class="btn btn-link text-decoration-none px-0 me-3">
+      <i class="bi bi-arrow-left"></i> Back
+    </a>
+    <h2 class="mb-0">{{ editId ? 'Edit' : 'New' }} Formation</h2>
+  </div>
+
+  <div class="card shadow-sm" style="max-width: 700px;">
+    <div class="card-body p-4">
+      <form (ngSubmit)="submit()" #f="ngForm">
+        <div class="mb-3">
+          <label class="form-label">Titre</label>
+          <input type="text" class="form-control" name="titre" [(ngModel)]="formation.titre" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" name="description" [(ngModel)]="formation.description"
+                    rows="3" required></textarea>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Prix (DT)</label>
+            <input type="number" class="form-control" name="prix" [(ngModel)]="formation.prix"
+                   required min="0" step="0.01">
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Niveau</label>
+            <select class="form-select" name="niveau" [(ngModel)]="formation.niveau" required>
+              <option *ngFor="let n of niveaux" [value]="n">{{ n }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Catégorie</label>
+          <select class="form-select" name="categorieId" [(ngModel)]="formation.categorieId" required>
+            <option *ngFor="let c of categories" [ngValue]="c.id">{{ c.nom }}</option>
+          </select>
+          <div *ngIf="categories.length === 0" class="form-text text-danger">
+            No categories exist. Create one first.
+          </div>
+        </div>
+
+        <div *ngIf="error" class="alert alert-danger py-2">{{ error }}</div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary"
+                  [disabled]="!f.valid || categories.length === 0">
+            <i class="bi bi-check-lg"></i> {{ editId ? 'Update' : 'Create' }}
+          </button>
+          <a routerLink="/formations" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

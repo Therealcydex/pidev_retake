@@ -1,0 +1,35 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+  <div class="container">
+    <a class="navbar-brand fw-bold" routerLink="/formations">
+      <i class="bi bi-mortarboard-fill"></i> SkillUp
+    </a>
+
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/formations" routerLinkActive="active">
+            <i class="bi bi-book"></i> Formations
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/categories" routerLinkActive="active">
+            <i class="bi bi-tags"></i> Catégories
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/stats" routerLinkActive="active">
+            <i class="bi bi-graph-up"></i> Stats
+          </a>
+        </li>
+      </ul>
+
+      <div class="d-flex align-items-center text-white">
+        <i class="bi bi-person-circle me-2"></i>
+        <span class="me-3">{{ username }}</span>
+        <button class="btn btn-sm btn-outline-light" (click)="logout()">
+          <i class="bi bi-box-arrow-right"></i> Logout
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>

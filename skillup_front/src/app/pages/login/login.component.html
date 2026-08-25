@@ -1,0 +1,57 @@
+<div class="auth-split">
+  <div class="auth-left">
+    <div class="auth-left-content">
+      <div class="auth-brand">
+        <div class="auth-brand-mark"></div>
+        <span class="auth-brand-name">SkillUp</span>
+      </div>
+
+      <div>
+        <h1 class="auth-hero">Develop the skills that move your career forward.</h1>
+        <p class="auth-hero-sub">
+          Course catalog, personalized progress tracking, and secure certifications — all in one platform.
+        </p>
+      </div>
+
+      <div class="auth-stats">
+        <div class="auth-stat">
+          <div class="auth-stat-num">1,200+</div>
+          <div class="auth-stat-label">formations</div>
+        </div>
+        <div class="auth-stat">
+          <div class="auth-stat-num">340</div>
+          <div class="auth-stat-label">organizations</div>
+        </div>
+        <div class="auth-stat">
+          <div class="auth-stat-num">98%</div>
+          <div class="auth-stat-label">certification rate</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-right">
+    <div class="auth-form-wrap">
+      <h2 class="auth-title">Welcome back</h2>
+      <p class="auth-subtitle">Sign in to access your training space.</p>
+
+      <form (ngSubmit)="submit()" #f="ngForm">
+        <label class="auth-label">Username</label>
+        <input type="text" class="auth-input" name="username" [(ngModel)]="username" required>
+
+        <label class="auth-label">Password</label>
+        <input type="password" class="auth-input" name="password" [(ngModel)]="password" required>
+
+        <div *ngIf="error" class="auth-error">{{ error }}</div>
+
+        <button type="submit" class="auth-btn-primary" [disabled]="!f.valid || loading">
+          {{ loading ? 'Signing in...' : 'Sign in' }}
+        </button>
+
+        <p class="auth-footer">
+          No account yet? <a routerLink="/signup">Create one</a>
+        </p>
+      </form>
+    </div>
+  </div>
+</div>

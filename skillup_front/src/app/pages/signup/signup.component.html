@@ -1,0 +1,33 @@
+<div class="signup-page">
+  <div class="signup-card">
+    <div class="signup-brand">
+      <div class="signup-brand-mark"></div>
+      <span class="signup-brand-name">SkillUp</span>
+    </div>
+
+    <span class="signup-kicker">Professional space</span>
+    <h1 class="signup-title">Create your account</h1>
+
+    <form (ngSubmit)="submit()" #f="ngForm">
+      <label class="signup-label">Username</label>
+      <input type="text" class="signup-input" name="username" [(ngModel)]="username" required>
+
+      <label class="signup-label">Email</label>
+      <input type="email" class="signup-input" name="email" [(ngModel)]="email" required>
+
+      <label class="signup-label">Password</label>
+      <input type="password" class="signup-input" name="password" [(ngModel)]="password"
+             required minlength="4">
+
+      <div *ngIf="error" class="signup-error">{{ error }}</div>
+
+      <button type="submit" class="signup-btn-primary" [disabled]="!f.valid || loading">
+        {{ loading ? 'Creating...' : 'Create my account' }}
+      </button>
+
+      <p class="signup-footer">
+        Already registered? <a routerLink="/login">Sign in</a>
+      </p>
+    </form>
+  </div>
+</div>

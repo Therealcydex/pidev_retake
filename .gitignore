@@ -1,0 +1,32 @@
+# Angular
+node_modules/
+.angular/
+dist/
+
+# Spring Boot
+target/
+*.class
+*.jar
+*.war
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Environment
+.env
+*.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Runtime uploads
+backEnd/uploads/
+
+# Runtime data (Keycloak, DB dumps, etc.)
+data/
+
+# Claude Code
+.claude/
