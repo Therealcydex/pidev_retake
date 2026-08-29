@@ -91,6 +91,14 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- In-memory database for the integration tests, so they need no MySQL -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<version>2.2.224</version>
+			<scope>test</scope>
+		</dependency>
+
 		<!-- Spring Security -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
