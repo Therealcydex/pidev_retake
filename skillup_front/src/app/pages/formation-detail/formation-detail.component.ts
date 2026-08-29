@@ -37,6 +37,15 @@ export class FormationDetailComponent implements OnInit {
       next: (f) => {
         this.formation = f;
         this.loading = false;
+
+        // Ownership is only known once the formation is loaded, so the roster is
+        // requested from here rather than alongside the other calls below.
+        if (this.canSeeInscriptions) {
+          this.inscriptionService.listByFormation(id).subscribe({
+            next: (list) => (this.inscriptions = list),
+            error: () => (this.inscriptions = [])
+          });
+        }
       },
       // getById answers 404 for an unknown id; show a message, not a blank page.
       error: () => {
@@ -49,25 +58,22 @@ export class FormationDetailComponent implements OnInit {
       next: (list) => (this.chapitres = list),
       error: () => (this.chapitres = [])
     });
-
-    if (this.canSeeInscriptions) {
-      this.inscriptionService.listByFormation(id).subscribe({
-        next: (list) => (this.inscriptions = list),
-        error: () => (this.inscriptions = [])
-      });
-    }
   }
 
-  /** Editing is open to admins and trainers, matching staffGuard on the edit route. */
+  /**
+   * An admin manages anything; a trainer only what they created. The same rule governs
+   * the Inscrits panel, mirroring FormationAccessService.requireCanEdit on the server.
+   */
   get canManage(): boolean {
-    const role = this.auth.getUser()?.role;
-    return role === 'ADMIN' || role === 'TRAINER';
+    const u = this.auth.getUser();
+    if (u?.role === 'ADMIN') return true;
+    return u?.role === 'TRAINER'
+      && this.formation?.ownerId != null
+      && this.formation.ownerId === u?.id;
   }
 
-  /** Admins and trainers may see who enrolled; trainees may not. */
   get canSeeInscriptions(): boolean {
-    const role = this.auth.getUser()?.role;
-    return role === 'ADMIN' || role === 'TRAINER';
+    return this.canManage;
   }
 
   get imageSrc(): string {

@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-import tn.esprit.formation.client.UserDto;
 import tn.esprit.formation.entity.Formation;
 import tn.esprit.formation.entity.FormationImage;
 import tn.esprit.formation.repository.FormationImageRepository;
@@ -14,7 +13,6 @@ import tn.esprit.formation.repository.FormationRepository;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.List;
 import java.util.Set;
 
 @Service
@@ -23,25 +21,9 @@ public class FormationImageService {
 
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(".png", ".jpg", ".jpeg", ".webp");
 
-    /** Roles allowed to attach or remove an illustration. */
-    private static final List<String> UPLOADER_ROLES = List.of("ADMIN", "TRAINER");
 
     private final FormationRepository formationRepository;
     private final FormationImageRepository imageRepository;
-    private final CurrentUserService currentUserService;
-
-    /**
-     * Formation has no JWT filter — SecurityConfig is permitAll — so there is no Spring
-     * Security principal to hand to @PreAuthorize. The caller is resolved instead through
-     * the USER service, with the incoming token relayed by FeignConfig's interceptor.
-     */
-    public void requireUploaderRole() {
-        UserDto user = currentUserService.currentUser();
-        if (user.getRole() == null || !UPLOADER_ROLES.contains(user.getRole())) {
-            throw new ResponseStatusException(
-                HttpStatus.FORBIDDEN, "Only an admin or a trainer can change the formation image");
-        }
-    }
 
     @Transactional
     public FormationImage store(Long formationId, MultipartFile file) {

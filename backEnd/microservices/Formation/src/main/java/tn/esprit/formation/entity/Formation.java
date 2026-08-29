@@ -36,6 +36,13 @@ public class Formation {
     @Column(columnDefinition = "TEXT")
     private String descriptionDetaillee;
 
+    /**
+     * User id of the trainer (or admin) who created it. A plain Long, not a relation:
+     * the user lives in another service and another database, so there is no foreign
+     * key to point at — the same reasoning as Inscription.userId.
+     */
+    @Column(name = "owner_id")
+    private Long ownerId;
 
     @Enumerated(EnumType.STRING)
     private Niveau niveau;

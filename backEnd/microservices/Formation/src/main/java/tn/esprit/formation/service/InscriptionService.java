@@ -15,6 +15,7 @@ import tn.esprit.formation.repository.FormationRepository;
 import tn.esprit.formation.repository.InscriptionRepository;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -24,20 +25,18 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class InscriptionService {
 
-    private static final List<String> STAFF_ROLES = List.of("ADMIN", "TRAINER");
-
     private final InscriptionRepository inscriptionRepository;
     private final FormationRepository formationRepository;
     private final CurrentUserService currentUserService;
     private final UserClient userClient;
 
-    /** Enrols the caller. Enrolling is a trainer action. */
+    /** Enrols the caller. Enrolling is a trainee action; staff manage the catalogue. */
     @Transactional
     public void enroll(Long formationId) {
         UserDto user = currentUserService.currentUser();
-        if (!"TRAINER".equals(user.getRole())) {
+        if (!"TRAINEE".equals(user.getRole())) {
             throw new ResponseStatusException(
-                HttpStatus.FORBIDDEN, "Seuls les formateurs peuvent s'inscrire à une formation");
+                HttpStatus.FORBIDDEN, "Seuls les apprenants peuvent s'inscrire à une formation");
         }
 
         Formation formation = formationRepository.findById(formationId)
@@ -81,8 +80,6 @@ public class InscriptionService {
      */
     @Transactional(readOnly = true)
     public List<InscriptionResponse> listByFormation(Long formationId) {
-        requireStaff();
-
         List<Inscription> inscriptions =
             inscriptionRepository.findByFormationIdOrderByDateInscriptionAsc(formationId);
         if (inscriptions.isEmpty()) {
@@ -114,22 +111,27 @@ public class InscriptionService {
     /** Which formations one user is enrolled in — the admin's per-user view. */
     @Transactional(readOnly = true)
     public List<Formation> formationsOfUser(Long userId) {
-        UserDto caller = currentUserService.currentUser();
-        if (!"ADMIN".equals(caller.getRole())) {
-            throw new ResponseStatusException(
-                HttpStatus.FORBIDDEN, "Réservé à l'administrateur");
-        }
+        requireAdmin();
         return inscriptionRepository.findByUserId(userId).stream()
             .map(Inscription::getFormation)
             .toList();
     }
 
-    /** Creating and editing a formation is open to admins and trainers. */
-    public void requireStaff() {
-        UserDto user = currentUserService.currentUser();
-        if (user.getRole() == null || !STAFF_ROLES.contains(user.getRole())) {
-            throw new ResponseStatusException(
-                HttpStatus.FORBIDDEN, "Réservé à un admin ou un formateur");
+    /** How many formations each user follows, keyed by user id. Admin only. */
+    @Transactional(readOnly = true)
+    public Map<Long, Long> countsByUser() {
+        requireAdmin();
+        Map<Long, Long> counts = new HashMap<>();
+        for (Object[] row : inscriptionRepository.countGroupedByUser()) {
+            counts.put((Long) row[0], (Long) row[1]);
+        }
+        return counts;
+    }
+
+    private void requireAdmin() {
+        UserDto caller = currentUserService.currentUser();
+        if (!"ADMIN".equals(caller.getRole())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Réservé à l'administrateur");
         }
     }
 }

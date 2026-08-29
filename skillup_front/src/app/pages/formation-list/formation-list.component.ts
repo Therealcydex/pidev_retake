@@ -29,14 +29,14 @@ export class FormationListComponent implements OnInit {
   enrolledIds = new Set<number>();
   enrollError = '';
 
-  /** Enrolling is a trainer action. */
-  get isTrainer(): boolean {
-    return this.auth.getUser()?.role === 'TRAINER';
+  /** Enrolling is a trainee action. */
+  get isTrainee(): boolean {
+    return this.auth.getUser()?.role === 'TRAINEE';
   }
 
   ngOnInit(): void {
     this.load();
-    if (this.isTrainer) {
+    if (this.isTrainee) {
       this.loadEnrolments();
     }
   }
@@ -122,14 +122,21 @@ export class FormationListComponent implements OnInit {
     return palette[(f.id ?? 0) % palette.length];
   }
 
-  /**
-   * Creating, editing and deleting a formation is open to admins and trainers —
-   * mirrors staffGuard on the form route, so the catalogue never offers a link that
-   * would bounce the user.
-   */
-  get canManage(): boolean {
+  /** Any staff member may create; ownership only matters once a formation exists. */
+  get canCreate(): boolean {
     const role = this.auth.getUser()?.role;
     return role === 'ADMIN' || role === 'TRAINER';
+  }
+
+  /**
+   * An admin manages anything; a trainer only what they created. Mirrors
+   * FormationAccessService.requireCanEdit on the server, so the catalogue never offers
+   * a button the API would refuse.
+   */
+  canEdit(f: Formation): boolean {
+    const u = this.auth.getUser();
+    if (u?.role === 'ADMIN') return true;
+    return u?.role === 'TRAINER' && f.ownerId != null && f.ownerId === u.id;
   }
 
   imageSrc(f: Formation): string {

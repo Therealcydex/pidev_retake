@@ -12,6 +12,7 @@ export interface Formation {
   imageFilename?: string;
   chapitreCount?: number;
   imageVersion?: number;
+  ownerId?: number;
 }
 
 export interface FormationStats {

@@ -1,6 +1,7 @@
 package tn.esprit.formation.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import tn.esprit.formation.entity.Inscription;
 
@@ -19,4 +20,11 @@ public interface InscriptionRepository extends JpaRepository<Inscription, Long> 
 
     /** Everything one trainee is enrolled in — "Mes formations". */
     List<Inscription> findByUserId(Long userId);
+
+    /**
+     * (userId, count) for everyone with at least one enrolment, in one query — so the
+     * admin users table shows a count per row without a request per user.
+     */
+    @Query("select i.userId, count(i) from Inscription i group by i.userId")
+    List<Object[]> countGroupedByUser();
 }

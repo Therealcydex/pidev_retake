@@ -25,12 +25,14 @@ import tn.esprit.formation.dto.FormationStatsResponse;
 import tn.esprit.formation.dto.InscriptionResponse;
 import tn.esprit.formation.entity.FormationImage;
 import tn.esprit.formation.service.CurrentUserService;
+import tn.esprit.formation.service.FormationAccessService;
 import tn.esprit.formation.service.FormationImageService;
 import tn.esprit.formation.service.FormationService;
 import tn.esprit.formation.service.InscriptionService;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/formations")
@@ -39,12 +41,14 @@ public class FormationController {
     private final FormationService formationService;
     private final CurrentUserService currentUserService;
     private final FormationImageService imageService;
+    private final FormationAccessService access;
     private final InscriptionService inscriptionService;
 
     @PostMapping
     public ResponseEntity<FormationResponse> create(@Valid @RequestBody FormationRequest request) {
-        inscriptionService.requireStaff();
-        return ResponseEntity.status(HttpStatus.CREATED).body(formationService.create(request));
+        access.requireStaff();
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(formationService.create(request, access.currentUserId()));
     }
 
     @GetMapping
@@ -80,7 +84,7 @@ public class FormationController {
     public ResponseEntity<FormationResponse> uploadImage(
         @PathVariable Long id,
         @RequestParam("file") MultipartFile file) {
-        imageService.requireUploaderRole();
+        access.requireCanEdit(id);
         imageService.store(id, file);
         return ResponseEntity.ok(formationService.getById(id));
     }
@@ -102,12 +106,18 @@ public class FormationController {
 
     @DeleteMapping("/{id}/image")
     public ResponseEntity<Void> deleteImage(@PathVariable Long id) {
-        imageService.requireUploaderRole();
+        access.requireCanEdit(id);
         imageService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     /* ---------- inscriptions ---------- */
+
+    /** How many formations each user follows, keyed by user id. Admin only. */
+    @GetMapping("/inscriptions/compteurs")
+    public ResponseEntity<Map<Long, Long>> inscriptionCounts() {
+        return ResponseEntity.ok(inscriptionService.countsByUser());
+    }
 
     /** Which formations one user is enrolled in. Admin only. */
     @GetMapping("/inscriptions/utilisateur/{userId}")
@@ -136,9 +146,10 @@ public class FormationController {
         return ResponseEntity.noContent().build();
     }
 
-    /** Enrolled trainees, for admins and trainers. */
+    /** Enrolled trainees. Admins see any formation, trainers only their own. */
     @GetMapping("/{id}/inscriptions")
     public ResponseEntity<List<InscriptionResponse>> inscriptions(@PathVariable Long id) {
+        access.requireCanEdit(id);
         return ResponseEntity.ok(inscriptionService.listByFormation(id));
     }
 
@@ -150,13 +161,13 @@ public class FormationController {
     @PutMapping("/{id}")
     public ResponseEntity<FormationResponse> update(@PathVariable Long id,
                                                     @Valid @RequestBody FormationRequest request) {
-        inscriptionService.requireStaff();
+        access.requireCanEdit(id);
         return ResponseEntity.ok(formationService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        inscriptionService.requireStaff();
+        access.requireCanEdit(id);
         formationService.delete(id);
         return ResponseEntity.noContent().build();
     }

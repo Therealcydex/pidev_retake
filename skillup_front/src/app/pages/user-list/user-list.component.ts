@@ -23,8 +23,23 @@ export class UserListComponent implements OnInit {
     private inscriptionService: InscriptionService
   ) {}
 
+  /** userId -> number of formations followed, loaded once for the whole table. */
+  counts: Record<number, number> = {};
+
   ngOnInit(): void {
     this.load();
+    this.loadCounts();
+  }
+
+  private loadCounts(): void {
+    this.inscriptionService.countsByUser().subscribe({
+      next: (c) => (this.counts = c),
+      error: () => (this.counts = {})
+    });
+  }
+
+  countFor(u: AppUser): number {
+    return this.counts[u.id] || 0;
   }
 
   load(): void {

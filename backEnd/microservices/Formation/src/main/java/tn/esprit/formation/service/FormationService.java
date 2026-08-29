@@ -50,7 +50,7 @@ public class FormationService {
     private final FormationImageRepository imageRepository;
     private final ChapitreRepository chapitreRepository;
 
-    public FormationResponse create(FormationRequest request) {
+    public FormationResponse create(FormationRequest request, Long ownerId) {
         Categorie categorie = categorieRepository.findById(request.getCategorieId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Catégorie not found"));
 
@@ -60,6 +60,7 @@ public class FormationService {
         formation.setDescriptionDetaillee(request.getDescriptionDetaillee());
         formation.setNiveau(request.getNiveau());
         formation.setCategorie(categorie);
+        formation.setOwnerId(ownerId);
 
         Formation saved = formationRepository.save(formation);
         return toResponse(saved);
@@ -235,7 +236,7 @@ public class FormationService {
         return new FormationResponse(
             f.getId(), f.getTitre(), f.getDescription(), f.getDescriptionDetaillee(),
             f.getNiveau(), f.getCategorie().getId(), f.getCategorie().getNom(),
-            false, null, 0L, null);
+            false, null, 0L, null, f.getOwnerId());
     }
 
     private FormationResponse toResponse(Formation f) {
@@ -260,7 +261,8 @@ public class FormationService {
             imageFilename != null,
             imageFilename,
             chapitreCount,
-            imageVersion
+            imageVersion,
+            f.getOwnerId()
         );
     }
 

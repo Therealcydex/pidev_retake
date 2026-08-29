@@ -19,7 +19,8 @@
             <th>Nom d'utilisateur</th>
             <th>E-mail</th>
             <th style="width:200px">Rôle</th>
-            <th class="su-right" style="width:130px">Actions</th>
+            <th class="su-right" style="width:110px">Formations</th>
+            <th class="su-right" style="width:150px">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -43,6 +44,10 @@
                 </span>
               </ng-template>
             </td>
+            <td class="su-right">
+              <span class="su-chip" *ngIf="countFor(u) > 0">{{ countFor(u) }}</span>
+              <span class="su-hint" style="margin:0" *ngIf="countFor(u) === 0">—</span>
+            </td>
             <td>
               <div class="su-actions">
                 <ng-container *ngIf="editingId === u.id; else displayActions">
@@ -62,7 +67,7 @@
           </tr>
 
           <tr *ngIf="expandedId === u.id">
-            <td colspan="5" style="background:#fcfcfd">
+            <td colspan="6" style="background:#fcfcfd">
               <div style="padding:6px 2px">
                 <div class="su-label-text">Formations suivies par {{ u.username }}</div>
 

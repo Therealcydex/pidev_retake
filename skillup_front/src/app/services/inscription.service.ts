@@ -29,6 +29,11 @@ export class InscriptionService {
     return this.http.get<Inscription[]>(this.api + '/' + formationId + '/inscriptions');
   }
 
+  /** How many formations each user follows, keyed by user id — admin only. */
+  countsByUser(): Observable<Record<number, number>> {
+    return this.http.get<Record<number, number>>(this.api + '/inscriptions/compteurs');
+  }
+
   /** Which formations one user is enrolled in — admin only. */
   formationsOfUser(userId: number): Observable<Formation[]> {
     return this.http.get<Formation[]>(this.api + '/inscriptions/utilisateur/' + userId);

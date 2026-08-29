@@ -8,10 +8,10 @@
       </p>
     </div>
     <div style="display:flex;gap:10px;align-items:center">
-      <span class="su-btn su-btn-secondary" *ngIf="isTrainer">
+      <span class="su-btn su-btn-secondary" *ngIf="isTrainee">
         Mes formations · {{ enrolledIds.size }}
       </span>
-      <a class="su-btn su-btn-primary" *ngIf="canManage"
+      <a class="su-btn su-btn-primary" *ngIf="canCreate"
          routerLink="/formations/new">+ Nouvelle formation</a>
     </div>
   </div>
@@ -79,14 +79,14 @@
           <button class="su-btn su-btn-secondary su-btn-sm su-push-left"
                   (click)="downloadPdf(f.id!, f.titre)">Fiche PDF</button>
 
-          <button *ngIf="isTrainer" class="su-btn su-btn-sm"
+          <button *ngIf="isTrainee" class="su-btn su-btn-sm"
                   [class.su-btn-primary]="!isEnrolled(f)"
                   [class.su-btn-secondary]="isEnrolled(f)"
                   (click)="toggleEnrolment(f)">
             {{ isEnrolled(f) ? 'Inscrit ✓' : "S'inscrire" }}
           </button>
 
-          <ng-container *ngIf="canManage">
+          <ng-container *ngIf="canEdit(f)">
             <a class="su-btn su-btn-primary su-btn-sm"
                [routerLink]="['/formations', f.id, 'edit']">Modifier</a>
             <button class="su-btn su-btn-sm su-btn-danger"

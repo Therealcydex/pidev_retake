@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormationService } from '../../services/formation.service';
 import { CategorieService } from '../../services/categorie.service';
 import { ChapitreService } from '../../services/chapitre.service';
+import { AuthService } from '../../services/auth.service';
 import { Formation, Niveau } from '../../models/formation.model';
 import { Categorie } from '../../models/categorie.model';
 import { Chapitre } from '../../models/chapitre.model';
@@ -50,7 +51,8 @@ export class FormationFormComponent implements OnInit, OnDestroy {
     private categorieService: CategorieService,
     private chapitreService: ChapitreService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private auth: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -64,9 +66,25 @@ export class FormationFormComponent implements OnInit, OnDestroy {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.editId = +id;
-      this.formationService.getById(this.editId).subscribe((f) => (this.formation = f));
+      this.formationService.getById(this.editId).subscribe((f) => {
+        // staffGuard lets any trainer open the route; ownership can only be checked
+        // once the formation is loaded, so bounce here rather than let them fill in a
+        // form the API would refuse to save.
+        if (!this.canEdit(f)) {
+          this.router.navigate(['/formations']);
+          return;
+        }
+        this.formation = f;
+      });
       this.loadChapitres();
     }
+  }
+
+  /** An admin edits anything; a trainer only what they created. */
+  canEdit(f: Formation): boolean {
+    const u = this.auth.getUser();
+    if (u?.role === 'ADMIN') return true;
+    return u?.role === 'TRAINER' && f.ownerId != null && f.ownerId === u.id;
   }
 
   /* ================= image ================= */
