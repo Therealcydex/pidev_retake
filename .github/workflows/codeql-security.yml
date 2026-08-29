@@ -1,0 +1,73 @@
+name: Security Analysis (CodeQL)
+
+# Static application security testing. CodeQL builds a queryable database of the code
+# and runs security queries over it — SQL injection, XSS, path traversal, hardcoded
+# credentials. Findings appear under the repository's Security tab.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Monday 08:00 UTC. The scheduled run matters because CodeQL's query set keeps
+    # growing: it catches newly published vulnerability patterns in code that has not
+    # changed since the last push.
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    name: Analyze ${{ matrix.language }}
+    runs-on: ubuntu-latest
+
+    permissions:
+      actions: read
+      contents: read
+      security-events: write   # required to upload the results
+
+    strategy:
+      # Keep scanning the other language if one fails.
+      fail-fast: false
+      matrix:
+        language: [ java, javascript ]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-and-quality
+
+      - name: Set up JDK 17
+        if: matrix.language == 'java'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      # CodeQL analyses Java from compiled bytecode, so the backend has to build. The
+      # aggregator pom covers all five modules in one command. Tests are skipped: this
+      # job is about producing bytecode to analyse, and ci-*.yml already runs them.
+      #
+      # Deliberately not wrapped in `|| true` — a compile failure must fail this job.
+      # Swallowing it would let CodeQL analyse partial bytecode and report a green
+      # result while silently missing vulnerabilities.
+      - name: Compile the backend
+        if: matrix.language == 'java'
+        working-directory: backEnd
+        run: mvn -B -ntp compile -DskipTests
+
+      # TypeScript and JavaScript are analysed from source, so no build is needed.
+      - name: Autobuild
+        if: matrix.language == 'javascript'
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:${{ matrix.language }}'
