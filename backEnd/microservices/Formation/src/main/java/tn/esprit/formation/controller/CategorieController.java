@@ -17,29 +17,10 @@ import tn.esprit.formation.service.CategorieService;
 
 import java.util.List;
 
-/**
- * REST API for categories. Reached through the Gateway: /categories/** -> port 8084.
- *
- *   POST   /categories        create    201
- *   GET    /categories        list      200
- *   GET    /categories/{id}   read one  200 / 404
- *   PUT    /categories/{id}   replace   200 / 404
- *   DELETE /categories/{id}   delete    204  <-- 500 if the category is still used,
- *                                             see the note in CategorieService.delete()
- *
- * The structure is identical to FormationController - same annotations, same status
- * codes. The detailed explanations (@RestController, @PathVariable, PUT vs POST,
- * why 201 and 204) are written there, once, rather than repeated in all three
- * controllers.
- *
- * NOTE: no @PreAuthorize and no authentication at all on this service - anyone who can
- * reach port 8084 can create or delete categories. See config/SecurityConfig.
- */
 @RestController
 @RequestMapping("/categories")
 @RequiredArgsConstructor
 public class CategorieController {
-
     private final CategorieService categorieService;
 
     @PostMapping

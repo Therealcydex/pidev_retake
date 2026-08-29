@@ -38,8 +38,16 @@ export class StatsComponent implements OnInit {
     return values.length ? Math.max(...values) : 1;
   }
 
-  maxNiveau(): number {
-    const values = Object.values(this.stats?.countByNiveau || {});
-    return values.length ? Math.max(...values) : 1;
+  /** Best-represented category, for the KPI tile. */
+  topCategorie(): { key: string; value: number } | null {
+    const entries = this.categorieEntries();
+    if (!entries.length) return null;
+    return entries.reduce((best, e) => (e.value > best.value ? e : best));
+  }
+
+  /** Blue ramp used by the stacked bar and its legend, as in the design. */
+  niveauColor(index: number): string {
+    const ramp = ['#2563eb', '#7ea2f5', '#c7d7fe'];
+    return ramp[index % ramp.length];
   }
 }

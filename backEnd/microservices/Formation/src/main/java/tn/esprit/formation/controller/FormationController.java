@@ -1,6 +1,8 @@
 package tn.esprit.formation.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -11,41 +13,33 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import tn.esprit.formation.client.UserDto;
 import tn.esprit.formation.dto.FormationRequest;
 import tn.esprit.formation.dto.FormationResponse;
 import tn.esprit.formation.dto.FormationStatsResponse;
+import tn.esprit.formation.entity.FormationImage;
+import tn.esprit.formation.service.CurrentUserService;
+import tn.esprit.formation.service.FormationImageService;
 import tn.esprit.formation.service.FormationService;
 
+import java.time.Duration;
 import java.util.List;
 
-/**
- * REST API for formations. Reached through the Gateway: /formations/** -> port 8084.
- *
- *   POST   /formations         create              201
- *   GET    /formations         list                200
- *   GET    /formations/stats   statistics          200
- *   GET    /formations/{id}    read one            200 / 404
- *   GET    /formations/{id}/pdf  PDF export        200 / 404
- *   PUT    /formations/{id}    replace             200 / 404
- *   DELETE /formations/{id}    delete + chapters   204
- *
- * Q: Where is the CORS configuration? The Angular app is on :4200, this is on :8084.
- * A: It is centralised on the GATEWAY, not repeated in each service. If you ever call
- *    this service directly from the browser, bypassing the gateway, the request is
- *    blocked by the same-origin policy - a frequent cause of "it works in Postman but
- *    not in Angular".
- */
 @RestController
 @RequestMapping("/formations")
 @RequiredArgsConstructor
 public class FormationController {
-
     private final FormationService formationService;
+    private final CurrentUserService currentUserService;
+    private final FormationImageService imageService;
 
     @PostMapping
-    public ResponseEntity<FormationResponse> create(@RequestBody FormationRequest request) {
+    public ResponseEntity<FormationResponse> create(@Valid @RequestBody FormationRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(formationService.create(request));
     }
 
@@ -54,41 +48,20 @@ public class FormationController {
         return ResponseEntity.ok(formationService.listAll());
     }
 
-    /**
-     * Q: /formations/stats and /formations/{id} both match the URL "/formations/stats".
-     *    Why is there no conflict, and does the declaration ORDER matter?
-     * A: No conflict, and the order in the file does NOT matter. Spring compares the
-     *    candidate patterns by SPECIFICITY, and a literal segment always beats a path
-     *    variable, so "/stats" wins over "/{id}".
-     *    Had it been the opposite, "stats" would have been bound to a Long id, conversion
-     *    would have failed and the client would get 400 - which is exactly the bug you see
-     *    in frameworks that match in declaration order (Express, for instance).
-     *    Keeping the literal routes above the parameterised ones is a good habit anyway:
-     *    it makes the intent readable.
-     */
     @GetMapping("/stats")
     public ResponseEntity<FormationStatsResponse> getStats() {
         return ResponseEntity.ok(formationService.getStats());
     }
 
-    /**
-     * Returns the PDF built by iText.
-     *
-     * Q: Why ResponseEntity<byte[]> and not a String or a DTO?
-     * A: A PDF is BINARY. Serialising it as text would corrupt it - any byte that is not
-     *    valid in the response charset gets mangled. byte[] is written to the response
-     *    body untouched.
-     *
-     * Q: What do the two headers do?
-     *    - Content-Type: application/pdf   tells the browser how to interpret the bytes.
-     *    - Content-Disposition: attachment; filename="..."  tells it to DOWNLOAD the file
-     *      under that name rather than display it inline. Replace `attachment` with
-     *      `inline` to open it in the browser's PDF viewer instead.
-     *
-     * Q: How does the Angular side consume this?
-     * A: It must ask for a blob - http.get(url, { responseType: 'blob' }) - otherwise
-     *    Angular tries to parse the binary as JSON and fails.
-     */
+    @GetMapping("/whoami")
+    public ResponseEntity<UserDto> whoami(
+        @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(currentUserService.currentUser());
+    }
+
     @GetMapping("/{id}/pdf")
     public ResponseEntity<byte[]> exportPdf(@PathVariable Long id) {
         byte[] pdf = formationService.exportPdf(id);
@@ -98,17 +71,49 @@ public class FormationController {
             .body(pdf);
     }
 
+    /** Attach or replace the formation illustration. Admins and trainers only. */
+    @PostMapping("/{id}/image")
+    public ResponseEntity<FormationResponse> uploadImage(
+        @PathVariable Long id,
+        @RequestParam("file") MultipartFile file) {
+        imageService.requireUploaderRole();
+        imageService.store(id, file);
+        return ResponseEntity.ok(formationService.getById(id));
+    }
+
+    /**
+     * The image itself. Served inline with an ETag so a second visit revalidates into a
+     * 304 instead of re-downloading it for every row of the list.
+     */
+    @GetMapping("/{id}/image")
+    public ResponseEntity<byte[]> getImage(@PathVariable Long id) {
+        FormationImage image = imageService.get(id);
+        return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType(image.getContentType()))
+            .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + image.getFilename() + "\"")
+            .eTag("\"" + image.getId() + "-" + image.getSizeBytes() + "\"")
+            .cacheControl(CacheControl.maxAge(Duration.ofHours(1)).cachePrivate())
+            .body(image.getData());
+    }
+
+    @DeleteMapping("/{id}/image")
+    public ResponseEntity<Void> deleteImage(@PathVariable Long id) {
+        imageService.requireUploaderRole();
+        imageService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<FormationResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(formationService.getById(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<FormationResponse> update(@PathVariable Long id, @RequestBody FormationRequest request) {
+    public ResponseEntity<FormationResponse> update(@PathVariable Long id,
+                                                    @Valid @RequestBody FormationRequest request) {
         return ResponseEntity.ok(formationService.update(id, request));
     }
 
-    /** Cascades to the chapters - see CascadeType.ALL in the Formation entity. */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         formationService.delete(id);

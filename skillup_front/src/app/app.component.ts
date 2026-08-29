@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 import { AuthService } from './services/auth.service';
 
 @Component({
@@ -6,9 +7,12 @@ import { AuthService } from './services/auth.service';
   templateUrl: './app.component.html'
 })
 export class AppComponent {
-  constructor(private auth: AuthService) {}
+  private readonly authRoutes = ['/login', '/signup'];
 
-  get isLoggedIn(): boolean {
-    return this.auth.isLoggedIn();
+  constructor(private auth: AuthService, private router: Router) {}
+
+  get showNavbar(): boolean {
+    const path = this.router.url.split('?')[0].split('#')[0];
+    return this.auth.isLoggedIn() && !this.authRoutes.includes(path);
   }
 }

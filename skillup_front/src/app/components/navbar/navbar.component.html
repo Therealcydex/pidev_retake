@@ -1,35 +1,25 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
-  <div class="container">
-    <a class="navbar-brand fw-bold" routerLink="/formations">
-      <i class="bi bi-mortarboard-fill"></i> SkillUp
+<nav class="su-topbar">
+  <div class="su-topbar-left">
+    <a class="su-brand" routerLink="/formations">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 8.5 12 4l10 4.5-10 4.5-10-4.5Z"></path>
+        <path d="M6 10.7V15c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.3"></path>
+        <path d="M21 9.5V15"></path>
+      </svg>
+      <span class="su-brand-name">SkillUp</span>
     </a>
 
-    <div class="collapse navbar-collapse">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/formations" routerLinkActive="active">
-            <i class="bi bi-book"></i> Formations
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/categories" routerLinkActive="active">
-            <i class="bi bi-tags"></i> Catégories
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/stats" routerLinkActive="active">
-            <i class="bi bi-graph-up"></i> Stats
-          </a>
-        </li>
-      </ul>
-
-      <div class="d-flex align-items-center text-white">
-        <i class="bi bi-person-circle me-2"></i>
-        <span class="me-3">{{ username }}</span>
-        <button class="btn btn-sm btn-outline-light" (click)="logout()">
-          <i class="bi bi-box-arrow-right"></i> Logout
-        </button>
-      </div>
+    <div class="su-nav">
+      <a routerLink="/formations" routerLinkActive="active">Catalogue</a>
+      <a routerLink="/stats" routerLinkActive="active">Statistiques</a>
+      <a *ngIf="isAdmin" routerLink="/users" routerLinkActive="active">Utilisateurs</a>
     </div>
+  </div>
+
+  <div class="su-topbar-right">
+    <span class="su-user-name">{{ username || email }}</span>
+    <div class="su-avatar">{{ initials }}</div>
+    <button class="su-btn su-btn-secondary" (click)="logout()">Déconnexion</button>
   </div>
 </nav>

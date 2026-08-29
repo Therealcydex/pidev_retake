@@ -10,8 +10,9 @@ import { LoginComponent } from './pages/login/login.component';
 import { SignupComponent } from './pages/signup/signup.component';
 import { FormationListComponent } from './pages/formation-list/formation-list.component';
 import { FormationFormComponent } from './pages/formation-form/formation-form.component';
-import { CategorieListComponent } from './pages/categorie-list/categorie-list.component';
+import { FormationDetailComponent } from './pages/formation-detail/formation-detail.component';
 import { StatsComponent } from './pages/stats/stats.component';
+import { UserListComponent } from './pages/user-list/user-list.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
 
 @NgModule({
@@ -21,8 +22,9 @@ import { NavbarComponent } from './components/navbar/navbar.component';
     SignupComponent,
     FormationListComponent,
     FormationFormComponent,
-    CategorieListComponent,
+    FormationDetailComponent,
     StatsComponent,
+    UserListComponent,
     NavbarComponent
   ],
   imports: [

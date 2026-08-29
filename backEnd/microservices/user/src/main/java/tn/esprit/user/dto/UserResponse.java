@@ -7,12 +7,6 @@ import lombok.Setter;
 
 import tn.esprit.user.entity.Role;
 
-/**
- * The public view of a user: AuthResponse without the token.
- * Returned by GET /auth/me and by every endpoint of UserController.
- *
- * This is the class that guarantees the password hash never reaches a client.
- */
 @Getter
 @Setter
 @NoArgsConstructor

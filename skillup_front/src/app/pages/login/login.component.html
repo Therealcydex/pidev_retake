@@ -1,55 +1,72 @@
-<div class="auth-split">
-  <div class="auth-left">
-    <div class="auth-left-content">
-      <div class="auth-brand">
-        <div class="auth-brand-mark"></div>
-        <span class="auth-brand-name">SkillUp</span>
-      </div>
+<div class="su-auth">
+  <div class="su-auth-left">
+    <div class="su-auth-brand">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 8.5 12 4l10 4.5-10 4.5-10-4.5Z"></path>
+        <path d="M6 10.7V15c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.3"></path>
+        <path d="M21 9.5V15"></path>
+      </svg>
+      <span class="su-auth-brand-name">SkillUp</span>
+    </div>
 
+    <div>
+      <h1 class="su-auth-hero">Développez les compétences qui font avancer votre organisation.</h1>
+      <p class="su-auth-hero-sub">
+        Catalogue de formations, suivi pédagogique personnalisé et certifications sécurisées,
+        dans une seule plateforme.
+      </p>
+    </div>
+
+    <div class="su-auth-stats">
       <div>
-        <h1 class="auth-hero">Develop the skills that move your career forward.</h1>
-        <p class="auth-hero-sub">
-          Course catalog, personalized progress tracking, and secure certifications — all in one platform.
-        </p>
+        <div class="su-auth-stat-num">24</div>
+        <div class="su-auth-stat-label">formations au catalogue</div>
       </div>
-
-      <div class="auth-stats">
-        <div class="auth-stat">
-          <div class="auth-stat-num">1,200+</div>
-          <div class="auth-stat-label">formations</div>
-        </div>
-        <div class="auth-stat">
-          <div class="auth-stat-num">340</div>
-          <div class="auth-stat-label">organizations</div>
-        </div>
-        <div class="auth-stat">
-          <div class="auth-stat-num">98%</div>
-          <div class="auth-stat-label">certification rate</div>
-        </div>
+      <div>
+        <div class="su-auth-stat-num">6</div>
+        <div class="su-auth-stat-label">catégories</div>
+      </div>
+      <div>
+        <div class="su-auth-stat-num">98%</div>
+        <div class="su-auth-stat-label">taux de certification</div>
       </div>
     </div>
   </div>
 
-  <div class="auth-right">
-    <div class="auth-form-wrap">
-      <h2 class="auth-title">Welcome back</h2>
-      <p class="auth-subtitle">Sign in to access your training space.</p>
+  <div class="su-auth-right">
+    <div class="su-auth-card">
+      <h2 class="su-auth-title">Connexion</h2>
+      <p class="su-auth-subtitle">Accédez à votre espace de formation.</p>
 
       <form (ngSubmit)="submit()" #f="ngForm">
-        <label class="auth-label">Username</label>
-        <input type="text" class="auth-input" name="username" [(ngModel)]="username" required>
+        <div class="su-field">
+          <label class="su-label-text" for="username">Nom d'utilisateur</label>
+          <input id="username" type="text" class="su-input" name="username"
+                 [(ngModel)]="username" required autocomplete="username">
+        </div>
 
-        <label class="auth-label">Password</label>
-        <input type="password" class="auth-input" name="password" [(ngModel)]="password" required>
+        <div class="su-field">
+          <label class="su-label-text" for="password">Mot de passe</label>
+          <input id="password" class="su-input" name="password"
+                 [type]="showPassword ? 'text' : 'password'"
+                 [(ngModel)]="password" required autocomplete="current-password">
+          <p class="su-hint">
+            <a class="su-link" href="javascript:void(0)" (click)="showPassword = !showPassword">
+              {{ showPassword ? 'Masquer' : 'Afficher' }} le mot de passe
+            </a>
+          </p>
+        </div>
 
-        <div *ngIf="error" class="auth-error">{{ error }}</div>
+        <div *ngIf="error" class="su-alert su-alert-error">{{ error }}</div>
 
-        <button type="submit" class="auth-btn-primary" [disabled]="!f.valid || loading">
-          {{ loading ? 'Signing in...' : 'Sign in' }}
+        <button type="submit" class="su-btn su-btn-primary su-btn-block"
+                [disabled]="!f.valid || loading">
+          {{ loading ? 'Connexion…' : 'Se connecter' }}
         </button>
 
-        <p class="auth-footer">
-          No account yet? <a routerLink="/signup">Create one</a>
+        <p class="su-auth-footer">
+          Pas encore de compte ? <a routerLink="/signup">Demander un accès</a>
         </p>
       </form>
     </div>

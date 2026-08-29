@@ -1,4 +1,6 @@
-export type Role = 'ADMIN' | 'TRAINEE';
+import { Role } from './user.model';
+
+export type { Role };
 
 export interface LoginRequest {
   username: string;
@@ -17,4 +19,11 @@ export interface AuthResponse {
   username: string;
   email: string;
   role: Role;
+}
+
+export interface UserInfo {
+  id: number;
+  username: string;
+  email: string;
+  role: string;
 }

@@ -20,6 +20,12 @@ volumes:
 # host.docker.internal → resolves to the Windows host from inside containers,
 # so Spring services can reach XAMPP MySQL running on the host at :3306.
 # The extra_hosts line under each service makes this portable to Linux too.
+#
+# NOTE on SPRING_DATASOURCE_URL below: the database names now match what the
+# config server serves (pidev_user / pidev_formation), so containers and IDE runs
+# share the same data. The override still cannot be deleted — the config server
+# says "localhost:3306", which inside a container means the container itself.
+# Only the host part differs; keep the env var, change only the name if you rename a DB.
 
 services:
 
@@ -72,11 +78,8 @@ services:
     depends_on:
       eureka:
         condition: service_healthy
-      config-server:
-        condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka
-      - CONFIG_SERVER_URL=http://config-server:8888
 
   # ─── Business microservices (talk to XAMPP MySQL on the host) ───────────────
 
@@ -97,7 +100,7 @@ services:
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka
       - CONFIG_SERVER_URL=http://config-server:8888
-      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/db_elevate_user?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/pidev_user?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=
       - JWT_SECRET=c2tpbGx1cC1qd3Qtc2VjcmV0LWtleS0yMDI0LWVzcHJpdC1hcHBsaWNhdGlvbg==
@@ -119,7 +122,7 @@ services:
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka
       - CONFIG_SERVER_URL=http://config-server:8888
-      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/db_elevate_formation?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/pidev_formation?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=
 

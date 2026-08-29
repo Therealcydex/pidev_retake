@@ -1,60 +1,183 @@
-<div class="container py-4">
-  <div class="d-flex align-items-center mb-4">
-    <a routerLink="/formations" class="btn btn-link text-decoration-none px-0 me-3">
-      <i class="bi bi-arrow-left"></i> Back
-    </a>
-    <h2 class="mb-0">{{ editId ? 'Edit' : 'New' }} Formation</h2>
-  </div>
+<form (ngSubmit)="submit()" #f="ngForm">
+  <div class="su-page">
+    <div class="su-page-head">
+      <div>
+        <p class="su-sub" style="margin-bottom:4px">
+          <a class="su-link" routerLink="/formations" style="font-weight:400">Formations</a>
+          &nbsp;/&nbsp;
+          <span style="color:var(--su-body);font-weight:600">
+            {{ editId ? 'Modifier' : 'Nouvelle formation' }}
+          </span>
+        </p>
+        <h1 class="su-h1" style="margin:0">
+          {{ editId ? 'Modifier la formation' : 'Nouvelle formation' }}
+        </h1>
+      </div>
+      <div style="display:flex;gap:10px">
+        <a class="su-btn su-btn-secondary" routerLink="/formations">Annuler</a>
+        <button type="submit" class="su-btn su-btn-primary" [disabled]="!f.valid">Enregistrer</button>
+      </div>
+    </div>
 
-  <div class="card shadow-sm" style="max-width: 700px;">
-    <div class="card-body p-4">
-      <form (ngSubmit)="submit()" #f="ngForm">
-        <div class="mb-3">
-          <label class="form-label">Titre</label>
-          <input type="text" class="form-control" name="titre" [(ngModel)]="formation.titre" required>
-        </div>
+    <div *ngIf="error" class="su-alert su-alert-error">{{ error }}</div>
 
-        <div class="mb-3">
-          <label class="form-label">Description</label>
-          <textarea class="form-control" name="description" [(ngModel)]="formation.description"
-                    rows="3" required></textarea>
-        </div>
+    <div class="su-form-layout">
+      <div>
+        <div class="su-card su-card-pad">
+          <h2 class="su-h2">Informations générales</h2>
 
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label class="form-label">Prix (DT)</label>
-            <input type="number" class="form-control" name="prix" [(ngModel)]="formation.prix"
-                   required min="0" step="0.01">
+          <div class="su-field">
+            <label class="su-label-text" for="titre">Titre</label>
+            <input id="titre" type="text" class="su-input" name="titre"
+                   [(ngModel)]="formation.titre" required>
           </div>
 
-          <div class="col-md-6 mb-3">
-            <label class="form-label">Niveau</label>
-            <select class="form-select" name="niveau" [(ngModel)]="formation.niveau" required>
-              <option *ngFor="let n of niveaux" [value]="n">{{ n }}</option>
+          <div>
+            <label class="su-label-text" for="description">Description brève</label>
+            <input id="description" type="text" class="su-input" name="description"
+                   maxlength="50" [(ngModel)]="formation.description" required
+                   placeholder="Résumé court affiché sur la carte">
+            <p class="su-hint" [class.su-hint-warn]="formation.description.length > 50">
+              Affichée sur la carte du catalogue · {{ formation.description.length }} / 50 caractères
+            </p>
+          </div>
+
+          <div style="margin-top:16px">
+            <label class="su-label-text" for="descriptionDetaillee">Description détaillée</label>
+            <textarea id="descriptionDetaillee" class="su-textarea" name="descriptionDetaillee"
+                      rows="8" [(ngModel)]="formation.descriptionDetaillee"
+                      placeholder="Texte complet affiché sur la page de la formation : objectifs, prérequis, déroulé…"></textarea>
+            <p class="su-hint">
+              Affichée sur la page de détail, quand on clique sur la formation. Facultative.
+            </p>
+          </div>
+
+          <div style="margin-top:16px">
+            <label class="su-label-text" for="categorie">Catégorie</label>
+            <select id="categorie" class="su-select" name="categorieId"
+                    [(ngModel)]="formation.categorieId" required>
+              <option *ngFor="let c of categories" [ngValue]="c.id">{{ c.nom }}</option>
             </select>
           </div>
-        </div>
 
-        <div class="mb-3">
-          <label class="form-label">Catégorie</label>
-          <select class="form-select" name="categorieId" [(ngModel)]="formation.categorieId" required>
-            <option *ngFor="let c of categories" [ngValue]="c.id">{{ c.nom }}</option>
-          </select>
-          <div *ngIf="categories.length === 0" class="form-text text-danger">
-            No categories exist. Create one first.
+          <label class="su-label-text" style="margin:16px 0 6px">Niveau</label>
+          <div class="su-segmented">
+            <button type="button" class="su-seg" *ngFor="let n of niveaux"
+                    [class.selected]="formation.niveau === n"
+                    (click)="formation.niveau = n">{{ n }}</button>
           </div>
         </div>
 
-        <div *ngIf="error" class="alert alert-danger py-2">{{ error }}</div>
+        <div class="su-card su-card-pad" style="margin-top:20px" *ngIf="editId">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <h2 class="su-h2" style="margin:0">Chapitres</h2>
+            <span class="su-chip">{{ chapitres.length }}</span>
+          </div>
 
-        <div class="d-flex gap-2">
-          <button type="submit" class="btn btn-primary"
-                  [disabled]="!f.valid || categories.length === 0">
-            <i class="bi bi-check-lg"></i> {{ editId ? 'Update' : 'Create' }}
-          </button>
-          <a routerLink="/formations" class="btn btn-outline-secondary">Cancel</a>
+          <div *ngIf="chapitres.length === 0" class="su-sub" style="margin-bottom:14px">
+            Aucun chapitre pour le moment.
+          </div>
+
+          <div *ngFor="let c of chapitres; let i = index"
+               style="border:1px solid var(--su-border);border-radius:8px;padding:11px 13px;margin-bottom:8px;background:#fcfcfd">
+            <ng-container *ngIf="editingChapitreId === c.id; else showChapitre">
+              <input type="text" class="su-input" style="margin-bottom:8px"
+                     [(ngModel)]="editingChapitreTitre" [ngModelOptions]="{standalone:true}"
+                     placeholder="Titre du chapitre">
+              <textarea class="su-textarea" rows="2" maxlength="255"
+                        [(ngModel)]="editingChapitreContenu" [ngModelOptions]="{standalone:true}"
+                        placeholder="Contenu (255 caractères max)"></textarea>
+              <div class="su-actions" style="margin-top:8px">
+                <button type="button" class="su-icon-btn" (click)="saveChapitre()">✓</button>
+                <button type="button" class="su-icon-btn" (click)="cancelEditChapitre()">✕</button>
+              </div>
+            </ng-container>
+
+            <ng-template #showChapitre>
+              <div style="display:flex;align-items:center;gap:12px">
+                <span style="font:600 12px 'Source Sans 3',sans-serif;color:var(--su-placeholder);width:22px">
+                  {{ (i + 1) < 10 ? '0' : '' }}{{ i + 1 }}
+                </span>
+                <div style="flex:1">
+                  <div style="font:500 14px 'Source Sans 3',sans-serif;color:var(--su-ink)">{{ c.titre }}</div>
+                  <div *ngIf="c.contenu" class="su-cell-desc">{{ c.contenu }}</div>
+                </div>
+                <div class="su-actions">
+                  <button type="button" class="su-icon-btn" (click)="startEditChapitre(c)">✎</button>
+                  <button type="button" class="su-icon-btn danger" (click)="deleteChapitre(c)">🗑</button>
+                </div>
+              </div>
+            </ng-template>
+          </div>
+
+          <div style="border-top:1px solid var(--su-border-row);margin-top:14px;padding-top:14px">
+            <label class="su-label-text">Ajouter un chapitre</label>
+            <input type="text" class="su-input" style="margin-bottom:8px"
+                   [(ngModel)]="newChapitreTitre" [ngModelOptions]="{standalone:true}"
+                   placeholder="Titre">
+            <textarea class="su-textarea" rows="2" maxlength="255"
+                      [(ngModel)]="newChapitreContenu" [ngModelOptions]="{standalone:true}"
+                      placeholder="Contenu (255 caractères max)"></textarea>
+            <button type="button" class="su-btn su-btn-secondary" style="margin-top:10px"
+                    [disabled]="!newChapitreTitre.trim()" (click)="addChapitre()">
+              + Ajouter un chapitre
+            </button>
+          </div>
         </div>
-      </form>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:20px">
+        <div class="su-card su-card-pad">
+          <h3 class="su-h3">Image de la formation</h3>
+          <p class="su-sub" style="margin-bottom:14px">
+            Ajoutez une image illustrant ce que la formation propose. Elle est affichée
+            aux apprenants dans le catalogue.
+          </p>
+
+          <div class="su-note" style="margin-bottom:14px">
+            Résolution recommandée : 1600 × 360 px
+          </div>
+
+          <div *ngIf="imageError" class="su-alert su-alert-error">{{ imageError }}</div>
+
+          <ng-container *ngIf="imageSrc as src">
+            <img [src]="src" alt="Image de la formation"
+                 style="width:100%;border:1px solid var(--su-border);border-radius:8px;display:block;margin-bottom:10px"
+                 onerror="this.style.display='none'">
+            <p class="su-hint" style="margin-bottom:12px">
+              {{ pendingFile?.name || formation.imageFilename }}
+            </p>
+            <div *ngIf="pendingFile" class="su-note" style="margin-bottom:12px">
+              L'image sera envoyée à l'enregistrement de la formation.
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button type="button" class="su-btn su-btn-secondary" (click)="removeImage()">
+                {{ pendingFile ? 'Annuler' : 'Supprimer' }}
+              </button>
+            </div>
+            <label class="su-label-text" style="margin-top:14px">Remplacer l'image</label>
+          </ng-container>
+
+          <input type="file" accept="image/png,image/jpeg,image/webp" class="su-input"
+                 [disabled]="uploading" (change)="onImageSelected($event)">
+          <p class="su-hint" *ngIf="uploading">Téléversement en cours…</p>
+        </div>
+
+        <div class="su-card su-card-pad" *ngIf="editId">
+          <h3 class="su-h3">Fiche PDF</h3>
+          <p class="su-sub" style="margin-bottom:14px">
+            Génère la fiche formation avec titre, catégorie, niveau, description
+            et liste des chapitres.
+          </p>
+          <button type="button" class="su-btn su-btn-secondary su-btn-block"
+                  (click)="downloadPdf()">Télécharger la fiche</button>
+        </div>
+
+        <div class="su-note">
+          La catégorie est obligatoire : une formation sans catégorie valide est refusée
+          à l'enregistrement.
+        </div>
+      </div>
     </div>
   </div>
-</div>
+</form>

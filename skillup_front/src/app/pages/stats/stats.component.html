@@ -1,90 +1,72 @@
-<div class="container py-4">
-  <h2 class="mb-4">
-    <i class="bi bi-graph-up text-primary"></i> Statistics
-  </h2>
+<div class="su-page">
+  <h1 class="su-h1" style="margin-bottom:22px">Statistiques du catalogue</h1>
 
-  <div *ngIf="loading" class="text-center py-5">
-    <div class="spinner-border text-primary"></div>
+  <div *ngIf="loading" class="su-card su-empty">Chargement…</div>
+
+  <div *ngIf="!loading && !stats" class="su-alert su-alert-error">
+    Impossible de charger les statistiques.
   </div>
 
-  <div *ngIf="!loading && stats">
-    <div class="row g-3 mb-4">
-      <div class="col-md-3">
-        <div class="card shadow-sm h-100 border-primary border-top border-3">
-          <div class="card-body">
-            <div class="text-muted small">Total Formations</div>
-            <div class="h3 mb-0 mt-2">{{ stats.totalFormations }}</div>
-          </div>
-        </div>
+  <ng-container *ngIf="!loading && stats">
+    <div class="su-kpi-grid">
+      <div class="su-card su-card-pad">
+        <div class="su-kpi-label">Total formations</div>
+        <div class="su-kpi-value">{{ stats.totalFormations }}</div>
+        <div class="su-kpi-hint">sur {{ categorieEntries().length }} catégories</div>
       </div>
-      <div class="col-md-3">
-        <div class="card shadow-sm h-100 border-success border-top border-3">
-          <div class="card-body">
-            <div class="text-muted small">Average Price</div>
-            <div class="h3 mb-0 mt-2">{{ stats.averagePrix | number:'1.0-2' }} DT</div>
-          </div>
-        </div>
+      <div class="su-card su-card-pad">
+        <div class="su-kpi-label">Catégories</div>
+        <div class="su-kpi-value">{{ categorieEntries().length }}</div>
+        <div class="su-kpi-hint">catégories représentées</div>
       </div>
-      <div class="col-md-3">
-        <div class="card shadow-sm h-100 border-info border-top border-3">
-          <div class="card-body">
-            <div class="text-muted small">Min Price</div>
-            <div class="h3 mb-0 mt-2">{{ stats.minPrix }} DT</div>
-          </div>
-        </div>
+      <div class="su-card su-card-pad">
+        <div class="su-kpi-label">Niveaux couverts</div>
+        <div class="su-kpi-value">{{ niveauEntries().length }} / 3</div>
+        <div class="su-kpi-hint">débutant, intermédiaire, avancé</div>
       </div>
-      <div class="col-md-3">
-        <div class="card shadow-sm h-100 border-warning border-top border-3">
-          <div class="card-body">
-            <div class="text-muted small">Max Price</div>
-            <div class="h3 mb-0 mt-2">{{ stats.maxPrix }} DT</div>
-          </div>
-        </div>
+      <div class="su-card su-card-pad">
+        <div class="su-kpi-label">Catégorie principale</div>
+        <div class="su-kpi-value">{{ topCategorie()?.key || '—' }}</div>
+        <div class="su-kpi-hint">{{ topCategorie()?.value || 0 }} formations</div>
       </div>
     </div>
 
-    <div class="row g-3">
-      <div class="col-md-6">
-        <div class="card shadow-sm h-100">
-          <div class="card-body">
-            <h5 class="card-title mb-3">
-              <i class="bi bi-tags text-primary"></i> By Catégorie
-            </h5>
-            <div *ngIf="categorieEntries().length === 0" class="text-muted">No data</div>
-            <div *ngFor="let e of categorieEntries()" class="mb-3">
-              <div class="d-flex justify-content-between mb-1">
-                <span class="fw-semibold">{{ e.key }}</span>
-                <span class="text-muted">{{ e.value }}</span>
-              </div>
-              <div class="progress" style="height: 8px;">
-                <div class="progress-bar bg-primary"
-                     [style.width.%]="(e.value / maxCategorie()) * 100"></div>
-              </div>
+    <div class="su-stats-layout">
+      <div class="su-card su-card-pad">
+        <h2 class="su-h2">Formations par catégorie</h2>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="su-bar-row" *ngFor="let c of categorieEntries()">
+            <span class="su-bar-name">{{ c.key }}</span>
+            <div class="su-bar-track">
+              <div class="su-bar-fill" [style.width.%]="(c.value / maxCategorie()) * 100"></div>
             </div>
+            <span class="su-bar-value">{{ c.value }}</span>
           </div>
+          <div *ngIf="categorieEntries().length === 0" class="su-sub">Aucune donnée.</div>
         </div>
       </div>
 
-      <div class="col-md-6">
-        <div class="card shadow-sm h-100">
-          <div class="card-body">
-            <h5 class="card-title mb-3">
-              <i class="bi bi-bar-chart text-primary"></i> By Niveau
-            </h5>
-            <div *ngIf="niveauEntries().length === 0" class="text-muted">No data</div>
-            <div *ngFor="let e of niveauEntries()" class="mb-3">
-              <div class="d-flex justify-content-between mb-1">
-                <span class="fw-semibold">{{ e.key }}</span>
-                <span class="text-muted">{{ e.value }}</span>
-              </div>
-              <div class="progress" style="height: 8px;">
-                <div class="progress-bar bg-success"
-                     [style.width.%]="(e.value / maxNiveau()) * 100"></div>
-              </div>
-            </div>
+      <div style="display:flex;flex-direction:column;gap:20px">
+        <div class="su-card su-card-pad">
+          <h2 class="su-h2">Répartition par niveau</h2>
+
+          <div class="su-stack" *ngIf="stats.totalFormations > 0">
+            <div *ngFor="let n of niveauEntries(); let i = index"
+                 [style.flex]="n.value"
+                 [style.background]="niveauColor(i)"></div>
           </div>
+
+          <div class="su-legend-row" *ngFor="let n of niveauEntries(); let i = index">
+            <div class="su-legend-left">
+              <div class="su-dot" [style.background]="niveauColor(i)"></div>
+              <span class="su-legend-name">{{ n.key }}</span>
+            </div>
+            <span class="su-legend-value">{{ n.value }}</span>
+          </div>
+          <div *ngIf="niveauEntries().length === 0" class="su-sub">Aucune donnée.</div>
         </div>
+
       </div>
     </div>
-  </div>
+  </ng-container>
 </div>

@@ -1,0 +1,62 @@
+<div class="su-page">
+  <div class="su-page-head">
+    <div>
+      <h1 class="su-h1">Gestion des utilisateurs</h1>
+      <p class="su-sub">{{ users.length }} compte{{ users.length === 1 ? '' : 's' }} enregistré{{ users.length === 1 ? '' : 's' }}</p>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="su-alert su-alert-error">{{ error }}</div>
+
+  <div class="su-card">
+    <div *ngIf="users.length === 0" class="su-empty">Aucun utilisateur.</div>
+
+    <div class="su-table-wrap" *ngIf="users.length > 0">
+      <table class="su-table">
+        <thead>
+          <tr>
+            <th style="width:80px">ID</th>
+            <th>Nom d'utilisateur</th>
+            <th>E-mail</th>
+            <th style="width:200px">Rôle</th>
+            <th class="su-right" style="width:130px">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let u of users">
+            <td style="color:var(--su-placeholder)">{{ u.id }}</td>
+            <td>
+              <span class="su-cell-title">{{ u.username }}</span>
+              <span *ngIf="isSelf(u)" class="su-chip" style="margin-left:8px">vous</span>
+            </td>
+            <td>{{ u.email }}</td>
+            <td>
+              <ng-container *ngIf="editingId === u.id; else displayRole">
+                <select class="su-select" [(ngModel)]="editingRole">
+                  <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+                </select>
+              </ng-container>
+              <ng-template #displayRole>
+                <span class="su-badge" [ngClass]="u.role === 'ADMIN' ? 'admin' : 'neutral'">
+                  {{ u.role }}
+                </span>
+              </ng-template>
+            </td>
+            <td>
+              <div class="su-actions">
+                <ng-container *ngIf="editingId === u.id; else displayActions">
+                  <button class="su-icon-btn" (click)="saveEdit(u)">✓</button>
+                  <button class="su-icon-btn" (click)="cancelEdit()">✕</button>
+                </ng-container>
+                <ng-template #displayActions>
+                  <button class="su-icon-btn" (click)="startEdit(u)">✎</button>
+                  <button class="su-icon-btn danger" (click)="delete(u)" [disabled]="isSelf(u)">🗑</button>
+                </ng-template>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

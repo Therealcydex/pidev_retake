@@ -4,17 +4,18 @@ export interface Formation {
   id?: number;
   titre: string;
   description: string;
-  prix: number;
+  descriptionDetaillee?: string;
   niveau: Niveau;
   categorieId: number;
   categorieNom?: string;
+  hasImage?: boolean;
+  imageFilename?: string;
+  chapitreCount?: number;
+  imageVersion?: number;
 }
 
 export interface FormationStats {
   totalFormations: number;
-  averagePrix: number;
-  minPrix: number;
-  maxPrix: number;
   countByCategorie: { [key: string]: number };
   countByNiveau: { [key: string]: number };
 }

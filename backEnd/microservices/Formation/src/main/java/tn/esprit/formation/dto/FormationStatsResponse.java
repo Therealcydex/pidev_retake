@@ -11,9 +11,6 @@ import java.util.Map;
 @AllArgsConstructor
 public class FormationStatsResponse {
     private long totalFormations;
-    private Double averagePrix;
-    private Double minPrix;
-    private Double maxPrix;
     private Map<String, Long> countByCategorie;
     private Map<String, Long> countByNiveau;
 }

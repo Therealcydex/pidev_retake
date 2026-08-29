@@ -1,0 +1,92 @@
+<div class="su-page">
+  <div *ngIf="loading" class="su-card su-empty">Chargement…</div>
+
+  <div *ngIf="notFound" class="su-card su-empty">
+    <p style="margin:0 0 12px">Formation introuvable.</p>
+    <a class="su-btn su-btn-secondary" routerLink="/formations">Retour au catalogue</a>
+  </div>
+
+  <ng-container *ngIf="formation as f">
+    <div class="su-page-head">
+      <div>
+        <p class="su-sub" style="margin-bottom:4px">
+          <a class="su-link" routerLink="/formations" style="font-weight:400">Catalogue</a>
+          &nbsp;/&nbsp;
+          <span style="color:var(--su-body);font-weight:600">{{ f.titre }}</span>
+        </p>
+        <h1 class="su-h1" style="margin:0">{{ f.titre }}</h1>
+      </div>
+      <div style="display:flex;gap:10px">
+        <a class="su-btn su-btn-secondary" routerLink="/formations">Retour</a>
+        <a class="su-btn su-btn-primary" *ngIf="canManage"
+           [routerLink]="['/formations', f.id, 'edit']">Modifier</a>
+      </div>
+    </div>
+
+    <div class="su-form-layout">
+      <div>
+        <div class="su-card" style="overflow:hidden">
+          <div class="su-detail-banner">
+            <img *ngIf="f.hasImage; else noCover" class="su-fcard-cover-img"
+                 [src]="imageSrc" alt="Image de la formation">
+            <ng-template #noCover>
+              <div class="su-fcard-cover" [style.background-color]="coverColor(f)"></div>
+              <span class="su-fcard-cover-label">IMAGE DE COUVERTURE</span>
+            </ng-template>
+
+            <div class="su-fcard-scrim"></div>
+            <span class="su-fcard-chip">{{ f.categorieNom || '—' }}</span>
+          </div>
+
+          <div class="su-card-pad">
+            <span class="su-level">{{ niveauLabel(f.niveau) }}</span>
+
+            <p class="su-detail-lead">{{ f.description }}</p>
+
+            <p class="su-detail-desc" *ngIf="f.descriptionDetaillee">
+              {{ f.descriptionDetaillee }}
+            </p>
+          </div>
+        </div>
+
+        <div class="su-card su-card-pad" style="margin-top:20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <h2 class="su-h2" style="margin:0">Chapitres</h2>
+            <span class="su-chip">{{ chapitres.length }}</span>
+          </div>
+
+          <div *ngIf="chapitres.length === 0" class="su-sub">
+            Aucun chapitre pour cette formation.
+          </div>
+
+          <div *ngFor="let c of chapitres; let i = index" class="su-chapter-row">
+            <span class="su-chapter-num">{{ (i + 1) < 10 ? '0' : '' }}{{ i + 1 }}</span>
+            <div style="flex:1">
+              <div class="su-chapter-title">{{ c.titre }}</div>
+              <div *ngIf="c.contenu" class="su-cell-desc">{{ c.contenu }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:20px">
+        <div class="su-card su-card-pad">
+          <h3 class="su-h3">En bref</h3>
+          <div class="su-kv"><span>Catégorie</span><b>{{ f.categorieNom || '—' }}</b></div>
+          <div class="su-kv"><span>Niveau</span><b>{{ f.niveau }}</b></div>
+          <div class="su-kv"><span>Chapitres</span><b>{{ chapitres.length }}</b></div>
+        </div>
+
+        <div class="su-card su-card-pad">
+          <h3 class="su-h3">Fiche PDF</h3>
+          <p class="su-sub" style="margin-bottom:14px">
+            Génère la fiche formation avec titre, catégorie, niveau, description
+            et liste des chapitres.
+          </p>
+          <button type="button" class="su-btn su-btn-secondary su-btn-block"
+                  (click)="downloadPdf()">Télécharger la fiche</button>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>
