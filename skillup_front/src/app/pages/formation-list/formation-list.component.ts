@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormationService } from '../../services/formation.service';
 import { AuthService } from '../../services/auth.service';
+import { InscriptionService } from '../../services/inscription.service';
 import { Formation, Niveau } from '../../models/formation.model';
 
 @Component({
@@ -20,11 +21,48 @@ export class FormationListComponent implements OnInit {
 
   constructor(
     private formationService: FormationService,
-    private auth: AuthService
+    private auth: AuthService,
+    private inscriptions: InscriptionService
   ) {}
+
+  /** Formation ids this trainee is enrolled in, fetched once for the whole grid. */
+  enrolledIds = new Set<number>();
+  enrollError = '';
+
+  /** Enrolling is a trainer action. */
+  get isTrainer(): boolean {
+    return this.auth.getUser()?.role === 'TRAINER';
+  }
 
   ngOnInit(): void {
     this.load();
+    if (this.isTrainer) {
+      this.loadEnrolments();
+    }
+  }
+
+  private loadEnrolments(): void {
+    this.inscriptions.myFormationIds().subscribe({
+      next: (ids) => (this.enrolledIds = new Set(ids)),
+      error: () => (this.enrolledIds = new Set())
+    });
+  }
+
+  isEnrolled(f: Formation): boolean {
+    return this.enrolledIds.has(f.id!);
+  }
+
+  toggleEnrolment(f: Formation): void {
+    this.enrollError = '';
+    const done = () => this.loadEnrolments();
+    const fail = (err: any) =>
+      (this.enrollError = err?.error?.message || "L'inscription a échoué.");
+
+    if (this.isEnrolled(f)) {
+      this.inscriptions.unenroll(f.id!).subscribe({ next: done, error: fail });
+    } else {
+      this.inscriptions.enroll(f.id!).subscribe({ next: done, error: fail });
+    }
   }
 
   load(): void {
@@ -85,11 +123,13 @@ export class FormationListComponent implements OnInit {
   }
 
   /**
-   * Creating, editing and deleting a formation is admin-only — mirrors adminGuard on
-   * the form route, so the catalogue never offers a link that would bounce the user.
+   * Creating, editing and deleting a formation is open to admins and trainers —
+   * mirrors staffGuard on the form route, so the catalogue never offers a link that
+   * would bounce the user.
    */
   get canManage(): boolean {
-    return this.auth.getUser()?.role === 'ADMIN';
+    const role = this.auth.getUser()?.role;
+    return role === 'ADMIN' || role === 'TRAINER';
   }
 
   imageSrc(f: Formation): string {

@@ -5,6 +5,8 @@ import { ChapitreService } from '../../services/chapitre.service';
 import { AuthService } from '../../services/auth.service';
 import { Formation, Niveau } from '../../models/formation.model';
 import { Chapitre } from '../../models/chapitre.model';
+import { Inscription } from '../../models/inscription.model';
+import { InscriptionService } from '../../services/inscription.service';
 
 @Component({
   selector: 'app-formation-detail',
@@ -13,6 +15,7 @@ import { Chapitre } from '../../models/chapitre.model';
 export class FormationDetailComponent implements OnInit {
   formation: Formation | null = null;
   chapitres: Chapitre[] = [];
+  inscriptions: Inscription[] = [];
   loading = false;
   notFound = false;
 
@@ -20,7 +23,8 @@ export class FormationDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private formationService: FormationService,
     private chapitreService: ChapitreService,
-    private auth: AuthService
+    private auth: AuthService,
+    private inscriptionService: InscriptionService
   ) {}
 
   ngOnInit(): void {
@@ -45,11 +49,25 @@ export class FormationDetailComponent implements OnInit {
       next: (list) => (this.chapitres = list),
       error: () => (this.chapitres = [])
     });
+
+    if (this.canSeeInscriptions) {
+      this.inscriptionService.listByFormation(id).subscribe({
+        next: (list) => (this.inscriptions = list),
+        error: () => (this.inscriptions = [])
+      });
+    }
   }
 
-  /** Editing stays admin-only, matching adminGuard on the edit route. */
+  /** Editing is open to admins and trainers, matching staffGuard on the edit route. */
   get canManage(): boolean {
-    return this.auth.getUser()?.role === 'ADMIN';
+    const role = this.auth.getUser()?.role;
+    return role === 'ADMIN' || role === 'TRAINER';
+  }
+
+  /** Admins and trainers may see who enrolled; trainees may not. */
+  get canSeeInscriptions(): boolean {
+    const role = this.auth.getUser()?.role;
+    return role === 'ADMIN' || role === 'TRAINER';
   }
 
   get imageSrc(): string {

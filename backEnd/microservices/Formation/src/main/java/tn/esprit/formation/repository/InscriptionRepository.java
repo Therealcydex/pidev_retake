@@ -1,0 +1,22 @@
+package tn.esprit.formation.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import tn.esprit.formation.entity.Inscription;
+
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface InscriptionRepository extends JpaRepository<Inscription, Long> {
+
+    Optional<Inscription> findByFormationIdAndUserId(Long formationId, Long userId);
+
+    boolean existsByFormationIdAndUserId(Long formationId, Long userId);
+
+    /** Everyone enrolled in one formation — the admin and trainer view. */
+    List<Inscription> findByFormationIdOrderByDateInscriptionAsc(Long formationId);
+
+    /** Everything one trainee is enrolled in — "Mes formations". */
+    List<Inscription> findByUserId(Long userId);
+}

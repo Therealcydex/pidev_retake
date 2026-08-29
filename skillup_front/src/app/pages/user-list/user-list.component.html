@@ -23,7 +23,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let u of users">
+          <ng-container *ngFor="let u of users">
+          <tr>
             <td style="color:var(--su-placeholder)">{{ u.id }}</td>
             <td>
               <span class="su-cell-title">{{ u.username }}</span>
@@ -49,12 +50,41 @@
                   <button class="su-icon-btn" (click)="cancelEdit()">✕</button>
                 </ng-container>
                 <ng-template #displayActions>
+                  <button class="su-icon-btn" title="Formations suivies"
+                          (click)="toggleInscriptions(u)">
+                    {{ expandedId === u.id ? '▾' : '▸' }}
+                  </button>
                   <button class="su-icon-btn" (click)="startEdit(u)">✎</button>
                   <button class="su-icon-btn danger" (click)="delete(u)" [disabled]="isSelf(u)">🗑</button>
                 </ng-template>
               </div>
             </td>
           </tr>
+
+          <tr *ngIf="expandedId === u.id">
+            <td colspan="5" style="background:#fcfcfd">
+              <div style="padding:6px 2px">
+                <div class="su-label-text">Formations suivies par {{ u.username }}</div>
+
+                <div *ngIf="loadingInscriptions" class="su-sub">Chargement…</div>
+
+                <div *ngIf="!loadingInscriptions && inscriptions.length === 0" class="su-sub">
+                  Cet utilisateur n'est inscrit à aucune formation.
+                </div>
+
+                <div *ngFor="let f of inscriptions" class="su-chapter-row">
+                  <div style="flex:1">
+                    <div class="su-chapter-title">{{ f.titre }}</div>
+                    <div class="su-cell-desc">{{ f.description }}</div>
+                  </div>
+                  <span class="su-chip">{{ f.categorieNom || '—' }}</span>
+                  <a class="su-icon-btn" title="Ouvrir la formation"
+                     [routerLink]="['/formations', f.id]">↗</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+          </ng-container>
         </tbody>
       </table>
     </div>

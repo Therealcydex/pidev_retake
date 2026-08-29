@@ -7,10 +7,16 @@
         réparties sur {{ categorieCount }} catégorie{{ categorieCount === 1 ? '' : 's' }}
       </p>
     </div>
-    <div style="display:flex;gap:10px" *ngIf="canManage">
-      <a class="su-btn su-btn-primary" routerLink="/formations/new">+ Nouvelle formation</a>
+    <div style="display:flex;gap:10px;align-items:center">
+      <span class="su-btn su-btn-secondary" *ngIf="isTrainer">
+        Mes formations · {{ enrolledIds.size }}
+      </span>
+      <a class="su-btn su-btn-primary" *ngIf="canManage"
+         routerLink="/formations/new">+ Nouvelle formation</a>
     </div>
   </div>
+
+  <div *ngIf="enrollError" class="su-alert su-alert-error">{{ enrollError }}</div>
 
   <div class="su-toolbar">
     <input type="text" class="su-input su-search" placeholder="Rechercher une formation…"
@@ -72,6 +78,13 @@
         <div class="su-fcard-foot">
           <button class="su-btn su-btn-secondary su-btn-sm su-push-left"
                   (click)="downloadPdf(f.id!, f.titre)">Fiche PDF</button>
+
+          <button *ngIf="isTrainer" class="su-btn su-btn-sm"
+                  [class.su-btn-primary]="!isEnrolled(f)"
+                  [class.su-btn-secondary]="isEnrolled(f)"
+                  (click)="toggleEnrolment(f)">
+            {{ isEnrolled(f) ? 'Inscrit ✓' : "S'inscrire" }}
+          </button>
 
           <ng-container *ngIf="canManage">
             <a class="su-btn su-btn-primary su-btn-sm"

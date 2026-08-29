@@ -230,6 +230,14 @@ public class FormationService {
         );
     }
 
+    /** Lightweight mapper for lists that only need identity — no image or chapter lookups. */
+    public FormationResponse toSummary(Formation f) {
+        return new FormationResponse(
+            f.getId(), f.getTitre(), f.getDescription(), f.getDescriptionDetaillee(),
+            f.getNiveau(), f.getCategorie().getId(), f.getCategorie().getNom(),
+            false, null, 0L, null);
+    }
+
     private FormationResponse toResponse(Formation f) {
         List<Object[]> meta = imageRepository.findMetaByFormationId(f.getId());
         String imageFilename = meta.isEmpty() ? null : (String) meta.get(0)[0];

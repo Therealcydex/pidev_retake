@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import tn.esprit.user.dto.UpdateUserRequest;
@@ -28,6 +29,17 @@ public class UserController {
     @GetMapping
     public ResponseEntity<List<UserResponse>> listAll() {
         return ResponseEntity.ok(userService.listAll());
+    }
+
+    /**
+     * Batch lookup used by the Formation service to name enrolled trainees. Declared
+     * before /{id} so "by-ids" is not read as an id, and opened to TRAINER — the
+     * method-level rule overrides the ADMIN-only one on the class.
+     */
+    @GetMapping("/by-ids")
+    @PreAuthorize("hasAnyRole('ADMIN','TRAINER')")
+    public ResponseEntity<List<UserResponse>> getByIds(@RequestParam("ids") List<Long> ids) {
+        return ResponseEntity.ok(userService.getByIds(ids));
     }
 
     @GetMapping("/{id}")

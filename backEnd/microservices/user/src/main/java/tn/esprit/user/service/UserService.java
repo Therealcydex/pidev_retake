@@ -91,6 +91,19 @@ public class UserService {
             .toList();
     }
 
+    /**
+     * Resolves several users in one call. Formation uses it to turn a list of enrolled
+     * user ids into names, instead of one Feign round-trip per enrolment.
+     */
+    public List<UserResponse> getByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return userRepository.findAllById(ids).stream()
+            .map(u -> new UserResponse(u.getId(), u.getUsername(), u.getEmail(), u.getRole()))
+            .toList();
+    }
+
     public UserResponse getById(Long id) {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));

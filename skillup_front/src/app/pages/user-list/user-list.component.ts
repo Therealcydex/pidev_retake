@@ -3,6 +3,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
 import { AppUser, Role, ROLES } from '../../models/user.model';
+import { Formation } from '../../models/formation.model';
+import { InscriptionService } from '../../services/inscription.service';
 
 @Component({
   selector: 'app-user-list',
@@ -15,7 +17,11 @@ export class UserListComponent implements OnInit {
   editingRole: Role = 'TRAINEE';
   error = '';
 
-  constructor(private userService: UserService, private auth: AuthService) {}
+  constructor(
+    private userService: UserService,
+    private auth: AuthService,
+    private inscriptionService: InscriptionService
+  ) {}
 
   ngOnInit(): void {
     this.load();
@@ -30,6 +36,34 @@ export class UserListComponent implements OnInit {
 
   isSelf(u: AppUser): boolean {
     return this.auth.getUser()?.id === u.id;
+  }
+
+  /* ---- enrolments, expanded one user at a time ---- */
+
+  expandedId: number | null = null;
+  inscriptions: Formation[] = [];
+  loadingInscriptions = false;
+
+  toggleInscriptions(u: AppUser): void {
+    if (this.expandedId === u.id) {
+      this.expandedId = null;
+      return;
+    }
+
+    this.expandedId = u.id;
+    this.inscriptions = [];
+    this.loadingInscriptions = true;
+
+    this.inscriptionService.formationsOfUser(u.id).subscribe({
+      next: (list) => {
+        this.inscriptions = list;
+        this.loadingInscriptions = false;
+      },
+      error: (err) => {
+        this.loadingInscriptions = false;
+        this.showError(err);
+      }
+    });
   }
 
   startEdit(u: AppUser): void {

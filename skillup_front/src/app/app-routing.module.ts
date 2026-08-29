@@ -10,6 +10,7 @@ import { StatsComponent } from './pages/stats/stats.component';
 import { UserListComponent } from './pages/user-list/user-list.component';
 import { authGuard } from './guards/auth.guard';
 import { adminGuard } from './guards/admin.guard';
+import { staffGuard } from './guards/staff.guard';
 import { guestGuard } from './guards/guest.guard';
 
 const routes: Routes = [
@@ -19,9 +20,9 @@ const routes: Routes = [
   { path: 'formations', component: FormationListComponent, canActivate: [authGuard] },
   // 'new' must stay above ':id' — Angular matches top-down and would otherwise read
   // "new" as a formation id.
-  { path: 'formations/new', component: FormationFormComponent, canActivate: [authGuard] },
+  { path: 'formations/new', component: FormationFormComponent, canActivate: [authGuard, staffGuard] },
   { path: 'formations/:id', component: FormationDetailComponent, canActivate: [authGuard] },
-  { path: 'formations/:id/edit', component: FormationFormComponent, canActivate: [authGuard] },
+  { path: 'formations/:id/edit', component: FormationFormComponent, canActivate: [authGuard, staffGuard] },
   { path: 'stats', component: StatsComponent, canActivate: [authGuard] },
   { path: 'users', component: UserListComponent, canActivate: [authGuard, adminGuard] },
   { path: '**', redirectTo: '/formations' }

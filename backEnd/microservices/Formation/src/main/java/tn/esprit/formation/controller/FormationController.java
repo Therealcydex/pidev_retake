@@ -22,10 +22,12 @@ import tn.esprit.formation.client.UserDto;
 import tn.esprit.formation.dto.FormationRequest;
 import tn.esprit.formation.dto.FormationResponse;
 import tn.esprit.formation.dto.FormationStatsResponse;
+import tn.esprit.formation.dto.InscriptionResponse;
 import tn.esprit.formation.entity.FormationImage;
 import tn.esprit.formation.service.CurrentUserService;
 import tn.esprit.formation.service.FormationImageService;
 import tn.esprit.formation.service.FormationService;
+import tn.esprit.formation.service.InscriptionService;
 
 import java.time.Duration;
 import java.util.List;
@@ -37,9 +39,11 @@ public class FormationController {
     private final FormationService formationService;
     private final CurrentUserService currentUserService;
     private final FormationImageService imageService;
+    private final InscriptionService inscriptionService;
 
     @PostMapping
     public ResponseEntity<FormationResponse> create(@Valid @RequestBody FormationRequest request) {
+        inscriptionService.requireStaff();
         return ResponseEntity.status(HttpStatus.CREATED).body(formationService.create(request));
     }
 
@@ -103,6 +107,41 @@ public class FormationController {
         return ResponseEntity.noContent().build();
     }
 
+    /* ---------- inscriptions ---------- */
+
+    /** Which formations one user is enrolled in. Admin only. */
+    @GetMapping("/inscriptions/utilisateur/{userId}")
+    public ResponseEntity<List<FormationResponse>> formationsOfUser(@PathVariable Long userId) {
+        return ResponseEntity.ok(
+            inscriptionService.formationsOfUser(userId).stream()
+                .map(formationService::toSummary)
+                .toList());
+    }
+
+    /** Formation ids the caller is enrolled in. Declared before /{id}. */
+    @GetMapping("/mes-inscriptions")
+    public ResponseEntity<List<Long>> myInscriptions() {
+        return ResponseEntity.ok(inscriptionService.myFormationIds());
+    }
+
+    @PostMapping("/{id}/inscription")
+    public ResponseEntity<Void> enroll(@PathVariable Long id) {
+        inscriptionService.enroll(id);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @DeleteMapping("/{id}/inscription")
+    public ResponseEntity<Void> unenroll(@PathVariable Long id) {
+        inscriptionService.unenroll(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    /** Enrolled trainees, for admins and trainers. */
+    @GetMapping("/{id}/inscriptions")
+    public ResponseEntity<List<InscriptionResponse>> inscriptions(@PathVariable Long id) {
+        return ResponseEntity.ok(inscriptionService.listByFormation(id));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<FormationResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(formationService.getById(id));
@@ -111,11 +150,13 @@ public class FormationController {
     @PutMapping("/{id}")
     public ResponseEntity<FormationResponse> update(@PathVariable Long id,
                                                     @Valid @RequestBody FormationRequest request) {
+        inscriptionService.requireStaff();
         return ResponseEntity.ok(formationService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
+        inscriptionService.requireStaff();
         formationService.delete(id);
         return ResponseEntity.noContent().build();
     }

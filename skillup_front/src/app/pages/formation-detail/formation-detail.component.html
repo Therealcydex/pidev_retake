@@ -70,6 +70,27 @@
       </div>
 
       <div style="display:flex;flex-direction:column;gap:20px">
+        <div class="su-card su-card-pad" *ngIf="canSeeInscriptions">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <h3 class="su-h3" style="margin:0">Inscrits</h3>
+            <span class="su-chip">{{ inscriptions.length }}</span>
+          </div>
+
+          <div *ngIf="inscriptions.length === 0" class="su-sub">
+            Aucun apprenant inscrit pour le moment.
+          </div>
+
+          <div *ngFor="let i of inscriptions" class="su-chapter-row">
+            <div style="flex:1">
+              <div class="su-chapter-title">{{ i.username }}</div>
+              <div class="su-cell-desc">{{ i.email }}</div>
+            </div>
+            <span class="su-hint" style="margin:0">
+              {{ i.dateInscription | date:'dd/MM/yyyy' }}
+            </span>
+          </div>
+        </div>
+
         <div class="su-card su-card-pad">
           <h3 class="su-h3">En bref</h3>
           <div class="su-kv"><span>Catégorie</span><b>{{ f.categorieNom || '—' }}</b></div>
