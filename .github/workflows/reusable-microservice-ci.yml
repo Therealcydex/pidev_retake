@@ -1,0 +1,67 @@
+name: Reusable Microservice CI
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        description: 'Display name, used for job title and artifact names'
+        required: true
+        type: string
+      service_path:
+        description: 'Directory containing the service pom.xml'
+        required: true
+        type: string
+      java_version:
+        description: 'JDK version to build with'
+        required: false
+        type: string
+        default: '17'
+      docker_build:
+        description: 'Also build the Docker image (build only, never pushed)'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    name: build & test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ inputs.java_version }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ inputs.java_version }}
+          cache: maven
+
+      - name: Build and test ${{ inputs.service_name }}
+        working-directory: ${{ inputs.service_path }}
+        run: mvn -B -ntp clean verify
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-${{ inputs.service_name }}
+          path: ${{ inputs.service_path }}/target/surefire-reports/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: jar-${{ inputs.service_name }}
+          path: ${{ inputs.service_path }}/target/*.jar
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Build Docker image
+        if: ${{ inputs.docker_build }}
+        working-directory: ${{ inputs.service_path }}
+        run: |
+          tag=$(echo "${{ inputs.service_name }}" | tr '[:upper:]' '[:lower:]')
+          docker build -t "skillup/${tag}:${GITHUB_SHA::7}" .

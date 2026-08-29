@@ -1,0 +1,23 @@
+name: User CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backEnd/microservices/user/**'
+      - '.github/workflows/ci-user.yml'
+      - '.github/workflows/reusable-microservice-ci.yml'
+  pull_request:
+    paths:
+      - 'backEnd/microservices/user/**'
+      - '.github/workflows/ci-user.yml'
+      - '.github/workflows/reusable-microservice-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: User
+    uses: ./.github/workflows/reusable-microservice-ci.yml
+    with:
+      service_name: 'User'
+      service_path: 'backEnd/microservices/user'

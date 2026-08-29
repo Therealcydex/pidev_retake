@@ -1,0 +1,23 @@
+name: Gateway CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backEnd/gateway/**'
+      - '.github/workflows/ci-gateway.yml'
+      - '.github/workflows/reusable-microservice-ci.yml'
+  pull_request:
+    paths:
+      - 'backEnd/gateway/**'
+      - '.github/workflows/ci-gateway.yml'
+      - '.github/workflows/reusable-microservice-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Gateway
+    uses: ./.github/workflows/reusable-microservice-ci.yml
+    with:
+      service_name: 'Gateway'
+      service_path: 'backEnd/gateway'

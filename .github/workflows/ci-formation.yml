@@ -1,0 +1,23 @@
+name: Formation CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backEnd/microservices/Formation/**'
+      - '.github/workflows/ci-formation.yml'
+      - '.github/workflows/reusable-microservice-ci.yml'
+  pull_request:
+    paths:
+      - 'backEnd/microservices/Formation/**'
+      - '.github/workflows/ci-formation.yml'
+      - '.github/workflows/reusable-microservice-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Formation
+    uses: ./.github/workflows/reusable-microservice-ci.yml
+    with:
+      service_name: 'Formation'
+      service_path: 'backEnd/microservices/Formation'

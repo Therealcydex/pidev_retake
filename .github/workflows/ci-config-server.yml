@@ -1,0 +1,23 @@
+name: ConfigServer CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backEnd/config-server/**'
+      - '.github/workflows/ci-config-server.yml'
+      - '.github/workflows/reusable-microservice-ci.yml'
+  pull_request:
+    paths:
+      - 'backEnd/config-server/**'
+      - '.github/workflows/ci-config-server.yml'
+      - '.github/workflows/reusable-microservice-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ConfigServer
+    uses: ./.github/workflows/reusable-microservice-ci.yml
+    with:
+      service_name: 'ConfigServer'
+      service_path: 'backEnd/config-server'

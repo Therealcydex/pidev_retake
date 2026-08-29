@@ -1,0 +1,23 @@
+name: Eureka CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backEnd/eureka/**'
+      - '.github/workflows/ci-eureka.yml'
+      - '.github/workflows/reusable-microservice-ci.yml'
+  pull_request:
+    paths:
+      - 'backEnd/eureka/**'
+      - '.github/workflows/ci-eureka.yml'
+      - '.github/workflows/reusable-microservice-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Eureka
+    uses: ./.github/workflows/reusable-microservice-ci.yml
+    with:
+      service_name: 'Eureka'
+      service_path: 'backEnd/eureka'
