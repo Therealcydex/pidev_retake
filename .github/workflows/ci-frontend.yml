@@ -32,14 +32,13 @@ jobs:
         working-directory: skillup_front
         run: npm ci
 
+      - name: Unit tests
+        working-directory: skillup_front
+        run: npx ng test --watch=false --browsers=ChromeHeadless
+
       - name: Build
         working-directory: skillup_front
         run: npm run build
-
-      # Unit tests are intentionally not run yet: app.component.spec.ts does not
-      # provide HttpClient, which AppComponent needs via AuthService, so `ng test`
-      # fails with NullInjectorError. Once the spec is fixed, add:
-      #   npx ng test --watch=false --browsers=ChromeHeadless
 
       - name: Upload build output
         uses: actions/upload-artifact@v4
