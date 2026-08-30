@@ -30,3 +30,11 @@ data/
 
 # Claude Code
 .claude/
+
+# Python / Jupyter (partie ML)
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Export HTML du notebook : regénérable, et lourd (1 Mo)
+ml/pidev_retake.html
