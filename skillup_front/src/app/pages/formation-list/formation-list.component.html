@@ -11,12 +11,30 @@
       <span class="su-btn su-btn-secondary" *ngIf="isTrainee">
         Mes formations · {{ enrolledIds.size }}
       </span>
+
+      <!-- Déclenche l'appel au modèle de recommandation (service Python). -->
+      <button class="su-btn su-btn-primary" *ngIf="isTrainee"
+              [disabled]="chargementSuggestions"
+              (click)="chargerSuggestions()">
+        {{ chargementSuggestions ? 'Analyse en cours…'
+           : suggestionsVisibles ? 'Masquer les suggestions'
+           : 'Recommandé pour moi' }}
+      </button>
       <a class="su-btn su-btn-primary" *ngIf="canCreate"
          routerLink="/formations/new">+ Nouvelle formation</a>
     </div>
   </div>
 
   <div *ngIf="enrollError" class="su-alert su-alert-error">{{ enrollError }}</div>
+
+  <div *ngIf="erreurSuggestions" class="su-alert su-alert-error">{{ erreurSuggestions }}</div>
+
+  <!-- Les suggestions ne sont plus une liste à part : elles remontent en tête de la
+       grille ci-dessous, marquées d'un badge. -->
+  <div class="su-note su-suggestions-note"
+       *ngIf="suggestionsVisibles && suggestions.length">
+    <b>{{ suggestions.length }} formations remontées en tête</b> — {{ libelleMethode }}.
+  </div>
 
   <div class="su-toolbar">
     <input type="text" class="su-input su-search" placeholder="Rechercher une formation…"
@@ -53,8 +71,10 @@
   </div>
 
   <div class="su-cat-grid" *ngIf="!loading && filtered.length > 0">
-    <article class="su-fcard" *ngFor="let f of filtered">
+    <article class="su-fcard" *ngFor="let f of filtered"
+             [class.suggeree]="estSuggeree(f)">
       <div class="su-fcard-banner">
+        <span class="su-badge-suggeree" *ngIf="estSuggeree(f)">Suggéré</span>
         <ng-container *ngIf="f.hasImage; else noCover">
           <img class="su-fcard-cover-img" [src]="imageSrc(f)" alt="">
         </ng-container>

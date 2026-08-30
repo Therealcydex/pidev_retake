@@ -795,3 +795,84 @@ html, body {
 
 /* Pins an item to the left of a flex-end row (the Fiche PDF button in card footers). */
 .su-push-left { margin-right: auto; }
+
+/* ---------- suggestions de formations (service de recommandation) ---------- */
+
+.su-suggestions {
+  background: var(--su-blue-soft);
+  border: 1px solid var(--su-blue-border);
+  border-radius: var(--su-radius);
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+
+.su-suggestions-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+/* Défile horizontalement plutôt que de comprimer les cartes sur petit écran. */
+.su-suggestions-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.su-suggestion {
+  flex: 1 1 0;
+  min-width: 190px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 13px 14px;
+  background: var(--su-surface);
+  border: 1px solid var(--su-border);
+  border-radius: var(--su-radius-sm);
+  text-decoration: none;
+  transition: border-color .12s, box-shadow .12s;
+}
+
+.su-suggestion:hover {
+  border-color: var(--su-blue);
+  box-shadow: 0 1px 6px rgba(37, 99, 235, .12);
+}
+
+.su-suggestion .su-level { align-self: flex-start; }
+
+.su-suggestion-titre {
+  font: 600 14px/1.35 'Source Sans 3', sans-serif;
+  color: var(--su-ink);
+}
+
+.su-suggestion-cat {
+  font: 12.5px 'Source Sans 3', sans-serif;
+  color: var(--su-muted);
+}
+
+/* ---------- formations suggérées, remontées en tête de la grille ---------- */
+
+.su-suggestions-note { margin-bottom: 18px; }
+
+/* La carte suggérée se distingue sans changer de forme : même grille, même taille. */
+.su-fcard.suggeree {
+  border-color: var(--su-blue);
+  box-shadow: 0 0 0 1px var(--su-blue), 0 1px 6px rgba(37, 99, 235, .14);
+}
+
+.su-badge-suggeree {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  padding: 3px 9px;
+  border-radius: 5px;
+  background: var(--su-blue);
+  color: #fff;
+  font: 600 11.5px 'Source Sans 3', sans-serif;
+  letter-spacing: .02em;
+}

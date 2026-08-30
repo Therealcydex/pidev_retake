@@ -21,7 +21,6 @@ from pathlib import Path
 import joblib
 import pandas as pd
 from fastapi import APIRouter, FastAPI, HTTPException, Query
-from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 MODELE = Path(__file__).resolve().parent.parent / "modele" / "recommandation.joblib"
@@ -34,14 +33,15 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Inutile lorsque l'on passe par la gateway (le navigateur ne parle qu'à :9090),
-# mais pratique pour tester l'API directement via /docs.
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:4200"],
-    allow_methods=["GET"],
-    allow_headers=["*"],
-)
+# Pas de CORS ici, volontairement.
+#
+# Le navigateur ne parle jamais à ce service directement : il appelle la gateway, qui
+# ajoute déjà l'en-tête Access-Control-Allow-Origin. Si les deux l'ajoutaient, le
+# navigateur verrait « http://localhost:4200, http://localhost:4200 » et refuserait la
+# réponse — un en-tête CORS en double est aussi invalide qu'un en-tête absent.
+#
+# La documentation /docs continue de fonctionner : elle est servie par ce même service,
+# donc les appels y sont de même origine et ne relèvent pas du CORS.
 
 router = APIRouter(prefix="/recommandations", tags=["recommandation"])
 

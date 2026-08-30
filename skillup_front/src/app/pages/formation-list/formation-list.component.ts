@@ -2,7 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { FormationService } from '../../services/formation.service';
 import { AuthService } from '../../services/auth.service';
 import { InscriptionService } from '../../services/inscription.service';
+import { RecommandationService } from '../../services/recommandation.service';
 import { Formation, Niveau } from '../../models/formation.model';
+import { FormationSuggeree } from '../../models/recommandation.model';
 
 @Component({
   selector: 'app-formation-list',
@@ -22,7 +24,8 @@ export class FormationListComponent implements OnInit {
   constructor(
     private formationService: FormationService,
     private auth: AuthService,
-    private inscriptions: InscriptionService
+    private inscriptions: InscriptionService,
+    private recommandations: RecommandationService
   ) {}
 
   /** Formation ids this trainee is enrolled in, fetched once for the whole grid. */
@@ -34,11 +37,60 @@ export class FormationListComponent implements OnInit {
     return this.auth.getUser()?.role === 'TRAINEE';
   }
 
+  /* ---- suggestions du service de recommandation ---- */
+
+  suggestions: FormationSuggeree[] = [];
+  /** « hybride » (basé sur le profil) ou « populaire » (repli démarrage à froid). */
+  methodeSuggestions = '';
+  suggestionsVisibles = false;
+  chargementSuggestions = false;
+  erreurSuggestions = '';
+
+  get libelleMethode(): string {
+    return this.methodeSuggestions === 'hybride'
+      ? "D'après les formations que vous suivez"
+      : 'Les formations les plus suivies';
+  }
+
   ngOnInit(): void {
     this.load();
     if (this.isTrainee) {
       this.loadEnrolments();
     }
+  }
+
+  /**
+   * Déclenché par l'apprenant. Le chargement n'est pas automatique : l'appel au modèle
+   * devient une action visible, et le catalogue reste identique pour qui ne la demande
+   * pas.
+   */
+  chargerSuggestions(): void {
+    if (this.suggestionsVisibles) {          // deuxième clic : on referme
+      this.suggestionsVisibles = false;
+      return;
+    }
+
+    const id = this.auth.getUser()?.id;
+    if (!id) return;
+
+    this.chargementSuggestions = true;
+    this.erreurSuggestions = '';
+
+    this.recommandations.pourApprenant(id, 5).subscribe({
+      next: (r) => {
+        this.suggestions = r.suggestions;
+        this.methodeSuggestions = r.methode;
+        this.suggestionsVisibles = true;
+        this.chargementSuggestions = false;
+      },
+      // Le service de recommandation est un service Python distinct. S'il est arrêté,
+      // on le dit — l'apprenant a cliqué, il attend une réponse.
+      error: () => {
+        this.erreurSuggestions =
+          "Le service de recommandation n'est pas disponible pour le moment.";
+        this.chargementSuggestions = false;
+      }
+    });
   }
 
   private loadEnrolments(): void {
@@ -91,12 +143,31 @@ export class FormationListComponent implements OnInit {
   get filtered(): Formation[] {
     const term = this.search.trim().toLowerCase();
 
-    return this.formations
+    const liste = this.formations
       .filter((f) => !term || f.titre.toLowerCase().includes(term))
       .filter((f) => !this.categorieFilter || f.categorieNom === this.categorieFilter)
       .filter((f) => !this.niveauFilter || f.niveau === this.niveauFilter)
       .sort((a, b) =>
         this.sortAsc ? a.titre.localeCompare(b.titre) : b.titre.localeCompare(a.titre));
+
+    if (!this.suggestionsVisibles || !this.suggestions.length) {
+      return liste;
+    }
+
+    // Les formations recommandées remontent, dans l'ordre donné par le modèle ; les
+    // autres suivent. Le tri de JavaScript est stable, donc le classement par titre
+    // ci-dessus est conservé à l'intérieur de chaque bloc.
+    const rang = new Map(this.suggestions.map((s, i) => [s.formation_id, i]));
+    const dernier = Number.MAX_SAFE_INTEGER;
+
+    return [...liste].sort(
+      (a, b) => (rang.get(a.id!) ?? dernier) - (rang.get(b.id!) ?? dernier));
+  }
+
+  /** Vrai si la formation fait partie des suggestions actuellement affichées. */
+  estSuggeree(f: Formation): boolean {
+    return this.suggestionsVisibles
+      && this.suggestions.some((s) => s.formation_id === f.id);
   }
 
   toggleSort(): void {
