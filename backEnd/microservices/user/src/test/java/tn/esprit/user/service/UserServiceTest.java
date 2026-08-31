@@ -17,14 +17,19 @@ import tn.esprit.user.entity.Role;
 import tn.esprit.user.entity.User;
 import tn.esprit.user.repository.UserRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -45,6 +50,9 @@ class UserServiceTest {
 
     @Mock
     private JwtService jwtService;
+
+    @Mock
+    private MailService mailService;
 
     @InjectMocks
     private UserService userService;
@@ -190,6 +198,95 @@ class UserServiceTest {
         assertTrue(userService.getByIds(null).isEmpty());
 
         // No pointless query when there is nothing to resolve.
+        verifyNoInteractions(userRepository);
+    }
+
+    // ---------- mot de passe oublie ----------
+
+    @Test
+    void forgotPasswordStoresATokenAndMailsIt() {
+        User user = new User(3L, "wassim", "hashed", "wassim@esprit.tn", Role.TRAINER);
+        when(userRepository.findByEmail("wassim@esprit.tn")).thenReturn(Optional.of(user));
+
+        userService.forgotPassword("wassim@esprit.tn");
+
+        ArgumentCaptor<User> enregistre = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(enregistre.capture());
+
+        String jeton = enregistre.getValue().getResetToken();
+        assertNotNull(jeton);
+        assertTrue(enregistre.getValue().getResetTokenExpiry().isAfter(LocalDateTime.now()));
+
+        // Le mot de passe actuel reste valable tant que le jeton n'a pas servi.
+        assertEquals("hashed", enregistre.getValue().getPassword());
+
+        verify(mailService).envoyerJetonReinitialisation(eq("wassim@esprit.tn"), eq(jeton), anyInt());
+    }
+
+    @Test
+    void forgotPasswordStaysSilentOnAnUnknownEmail() {
+        when(userRepository.findByEmail("inconnu@esprit.tn")).thenReturn(Optional.empty());
+
+        // Pas d'exception : la reponse doit etre identique, sinon ce point d'entree
+        // permettrait de decouvrir qui possede un compte.
+        userService.forgotPassword("inconnu@esprit.tn");
+
+        verify(userRepository, never()).save(any());
+        verifyNoInteractions(mailService);
+    }
+
+    @Test
+    void resetPasswordReplacesTheHashAndBurnsTheToken() {
+        User user = new User(3L, "wassim", "ancien-hash", "wassim@esprit.tn", Role.TRAINER);
+        user.setResetToken("123456");
+        user.setResetTokenExpiry(LocalDateTime.now().plusMinutes(10));
+
+        when(userRepository.findByResetToken("123456")).thenReturn(Optional.of(user));
+        when(passwordEncoder.encode("nouveau-mot-de-passe")).thenReturn("nouveau-hash");
+
+        userService.resetPassword("123456", "nouveau-mot-de-passe");
+
+        ArgumentCaptor<User> enregistre = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(enregistre.capture());
+
+        assertEquals("nouveau-hash", enregistre.getValue().getPassword());
+        // Un jeton ne vaut que pour un seul changement.
+        assertNull(enregistre.getValue().getResetToken());
+        assertNull(enregistre.getValue().getResetTokenExpiry());
+    }
+
+    @Test
+    void resetPasswordRejectsAnExpiredToken() {
+        User user = new User(3L, "wassim", "ancien-hash", "wassim@esprit.tn", Role.TRAINER);
+        user.setResetToken("123456");
+        user.setResetTokenExpiry(LocalDateTime.now().minusMinutes(1));
+
+        when(userRepository.findByResetToken("123456")).thenReturn(Optional.of(user));
+
+        ResponseStatusException e = assertThrows(ResponseStatusException.class,
+            () -> userService.resetPassword("123456", "nouveau-mot-de-passe"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, e.getStatusCode());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void resetPasswordRejectsAnUnknownToken() {
+        when(userRepository.findByResetToken("000000")).thenReturn(Optional.empty());
+
+        ResponseStatusException e = assertThrows(ResponseStatusException.class,
+            () -> userService.resetPassword("000000", "nouveau-mot-de-passe"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, e.getStatusCode());
+    }
+
+    @Test
+    void resetPasswordRejectsATooShortPassword() {
+        ResponseStatusException e = assertThrows(ResponseStatusException.class,
+            () -> userService.resetPassword("123456", "abc"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, e.getStatusCode());
+        // Refuse avant meme de chercher le jeton : rien a lire en base.
         verifyNoInteractions(userRepository);
     }
 }

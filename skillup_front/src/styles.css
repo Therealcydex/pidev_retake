@@ -392,6 +392,8 @@ html, body {
 
 .su-alert-error { background: #fffbfa; border: 1px solid var(--su-danger-border); color: #b42318; }
 
+.su-alert-success { background: #f6fef9; border: 1px solid #abefc6; color: #067647; }
+
 .su-empty {
   padding: 40px 20px;
   text-align: center;

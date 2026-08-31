@@ -8,6 +8,7 @@ import { AppComponent } from './app.component';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { LoginComponent } from './pages/login/login.component';
 import { SignupComponent } from './pages/signup/signup.component';
+import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
 import { FormationListComponent } from './pages/formation-list/formation-list.component';
 import { FormationFormComponent } from './pages/formation-form/formation-form.component';
 import { FormationDetailComponent } from './pages/formation-detail/formation-detail.component';
@@ -20,6 +21,7 @@ import { NavbarComponent } from './components/navbar/navbar.component';
     AppComponent,
     LoginComponent,
     SignupComponent,
+    ForgotPasswordComponent,
     FormationListComponent,
     FormationFormComponent,
     FormationDetailComponent,

@@ -20,6 +20,16 @@ export class AuthService {
       .pipe(tap(res => this.saveAuth(res)));
   }
 
+  /** Étape 1 : demande l'envoi d'un code à l'adresse mail du compte. */
+  forgotPassword(email: string): Observable<void> {
+    return this.http.post<void>(this.api + '/forgot-password', { email });
+  }
+
+  /** Étape 2 : échange le code reçu par mail contre un nouveau mot de passe. */
+  resetPassword(token: string, newPassword: string): Observable<void> {
+    return this.http.post<void>(this.api + '/reset-password', { token, newPassword });
+  }
+
   logout(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('user');

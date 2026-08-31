@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { LoginComponent } from './pages/login/login.component';
 import { SignupComponent } from './pages/signup/signup.component';
+import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
 import { FormationListComponent } from './pages/formation-list/formation-list.component';
 import { FormationFormComponent } from './pages/formation-form/formation-form.component';
 import { FormationDetailComponent } from './pages/formation-detail/formation-detail.component';
@@ -17,6 +18,7 @@ const routes: Routes = [
   { path: '', redirectTo: '/formations', pathMatch: 'full' },
   { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
   { path: 'signup', component: SignupComponent, canActivate: [guestGuard] },
+  { path: 'forgot-password', component: ForgotPasswordComponent, canActivate: [guestGuard] },
   { path: 'formations', component: FormationListComponent, canActivate: [authGuard] },
   // 'new' must stay above ':id' — Angular matches top-down and would otherwise read
   // "new" as a formation id.

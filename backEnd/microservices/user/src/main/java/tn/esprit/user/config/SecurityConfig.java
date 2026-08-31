@@ -35,6 +35,12 @@ public class SecurityConfig {
 
                 .requestMatchers("/auth/**").permitAll()
 
+                // Quand un controleur leve une exception, Spring reachemine la requete
+                // vers /error. Spring Security filtre aussi ce reacheminement : sans
+                // cette ligne, /error est refuse et le client recoit un 403 vide a la
+                // place du vrai code (401 identifiants invalides, 400 code expire...).
+                .requestMatchers("/error").permitAll()
+
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/actuator/**").permitAll()
 
                 .anyRequest().authenticated()
