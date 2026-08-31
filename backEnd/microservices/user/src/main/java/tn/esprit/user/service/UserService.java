@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.security.SecureRandom;
@@ -129,6 +130,20 @@ public class UserService {
         user.setResetToken(null);
         user.setResetTokenExpiry(null);
         userRepository.save(user);
+    }
+
+    /**
+     * Efface les codes de reinitialisation perimes. Appele par TokenCleanupJob.
+     *
+     * @Transactional est indispensable : une requete de modification JPQL echoue sans
+     * transaction ouverte. Elle est ici, sur le service, et non sur le repository — la
+     * limite d'une transaction est une decision metier.
+     *
+     * @return le nombre de comptes nettoyes
+     */
+    @Transactional
+    public int purgerJetonsExpires(LocalDateTime maintenant) {
+        return userRepository.purgerJetonsExpires(maintenant);
     }
 
     /**

@@ -284,6 +284,39 @@ html, body {
 
 .su-field { margin-bottom: 16px; }
 
+/* Champ mot de passe : l'oeil est pose dans le champ, a droite. Le padding droit de
+   l'input lui reserve la place, sinon le texte saisi passerait dessous. */
+.su-password-wrap { position: relative; }
+
+.su-password-wrap .su-input { padding-right: 42px; }
+
+.su-eye {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: var(--su-radius-sm);
+  background: transparent;
+  color: var(--su-placeholder);
+  cursor: pointer;
+  transition: color .12s, background .12s;
+}
+
+.su-eye:hover { color: var(--su-ink); background: var(--su-blue-soft); }
+
+.su-eye:focus-visible {
+  outline: none;
+  color: var(--su-blue);
+  box-shadow: 0 0 0 3px var(--su-blue-soft);
+}
+
 .su-hint {
   font: 12.5px 'Source Sans 3', sans-serif;
   color: var(--su-placeholder);
