@@ -1,6 +1,6 @@
-export type Role = 'ADMIN' | 'TRAINER' | 'TRAINEE' | 'COMPANY';
+export type Role = 'ADMIN' | 'TRAINER' | 'TRAINEE';
 
-export const ROLES: Role[] = ['ADMIN', 'TRAINER', 'TRAINEE', 'COMPANY'];
+export const ROLES: Role[] = ['ADMIN', 'TRAINER', 'TRAINEE'];
 
 export interface AppUser {
   id: number;

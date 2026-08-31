@@ -38,3 +38,12 @@ __pycache__/
 
 # Export HTML du notebook : regénérable, et lourd (1 Mo)
 ml/pidev_retake.html
+
+# Documentation de travail : notes de soutenance, comptes rendus, instructions
+# d'outillage. Utiles en local, sans intérêt dans le dépôt rendu.
+/CLAUDE.md
+/STATUS.md
+/ml/SOUTENANCE.md
+/backEnd/config-server/README.md
+/backEnd/microservices/Formation/FORMATION-IMAGE.md
+/backEnd/microservices/user/USER_BEHAVIOR.md

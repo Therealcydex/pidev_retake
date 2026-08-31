@@ -21,11 +21,10 @@ class SmokeTest {
     @Test
     void allApplicationRolesAreDefined() {
         // The frontend and the JWT claims both rely on these exact names.
-        assertEquals(4, Role.values().length);
+        assertEquals(3, Role.values().length);
         assertNotNull(Role.valueOf("ADMIN"));
         assertNotNull(Role.valueOf("TRAINER"));
         assertNotNull(Role.valueOf("TRAINEE"));
-        assertNotNull(Role.valueOf("COMPANY"));
     }
 
     @Test
