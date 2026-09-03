@@ -1,5 +1,4 @@
 """
-Microservice de recommandation de formations — SkillUp.
 
 Besoin MLA : « analyser des profils pour suggérer les formations les plus pertinentes ».
 
@@ -15,8 +14,8 @@ Deux vitesses, volontairement séparées :
     que si le catalogue ou la population changent ;
 
   * l'historique de l'apprenant qui appelle est relu dans MySQL à chaque requête. C'est
-    ce qui fait qu'une inscription faite dans l'application modifie immédiatement ses
-    recommandations.
+    c
+
 
 Démarrage :
     python main.py
@@ -50,7 +49,14 @@ BASE = os.environ.get(
 
 EUREKA = os.environ.get("EUREKA_URL", "http://localhost:8761/eureka")
 NOM_SERVICE = "recommandation"
-PORT = 8000
+PORT = int(os.environ.get("PORT", "8000"))
+
+# L'adresse que ce service publie dans Eureka — celle que la gateway utilisera pour
+# l'appeler. Hors conteneur, « localhost » convient : tout tourne sur la meme machine.
+# Dans un conteneur, non : « localhost » y designe le conteneur lui-meme, et la gateway
+# resolverait RECOMMANDATION vers sa propre adresse. Il faut alors publier un nom
+# joignable depuis la gateway (le nom du conteneur, ou l'adresse de l'hote).
+HOTE_PUBLIE = os.environ.get("EUREKA_INSTANCE_HOST", "localhost")
 
 ALEA = 42               # même graine que le notebook, donc mêmes groupes
 N_VOISINS = 20          # apprenants proches consultés par le collaboratif
@@ -400,9 +406,9 @@ async def enregistrer():
             eureka_server=EUREKA,
             app_name=NOM_SERVICE,
             instance_port=PORT,
-            instance_host="localhost",
+            instance_host=HOTE_PUBLIE,
         )
-        print(f"Enregistre aupres d'Eureka : {EUREKA}")
+        print(f"Enregistre aupres d'Eureka : {EUREKA} (publie comme {HOTE_PUBLIE}:{PORT})")
     except Exception as e:
         print(f"Eureka indisponible ({e}) — le service fonctionne quand meme.")
 

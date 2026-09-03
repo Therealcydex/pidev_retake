@@ -1,0 +1,157 @@
+# SkillUp — pile complete.
+#
+#   docker compose up -d --build
+#
+# Tout est conteneurise : la base, les cinq services Spring, le service Python de
+# recommandation et le front. Aucune dependance a XAMPP ni a IntelliJ.
+#
+#   Front     http://localhost:4200
+#   Gateway   http://localhost:9090
+#   Eureka    http://localhost:8761
+#
+# Les Dockerfiles sont multi-etages : Maven et npm tournent DANS Docker. Rien n'a
+# besoin d'etre compile au prealable sur le poste.
+
+services:
+
+  # ─── Base de donnees ────────────────────────────────────────────────────────
+  # MariaDB 10.4, la version de XAMPP : le jeu de donnees initial est un dump
+  # MariaDB, l'importer dans un MySQL 8 marcherait « sans doute », ce qui n'est pas
+  # une base saine pour une demonstration.
+  mysql:
+    image: mariadb:10.4
+    environment:
+      MYSQL_ROOT_PASSWORD: skillup
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # Les scripts deposes ici ne sont joues qu'au tout premier demarrage, quand le
+      # repertoire de donnees est vide. Ensuite ils sont ignores : le seed ne peut
+      # donc jamais ecraser des donnees saisies depuis.
+      - ./docker/mysql-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pskillup"]
+      interval: 5s
+      timeout: 5s
+      # 60 tentatives : le premier demarrage initialise le repertoire de donnees
+      # puis importe le seed, ce qui prend nettement plus longtemps que les suivants.
+      retries: 60
+    networks: [skillup]
+
+  # ─── Annuaire de services ───────────────────────────────────────────────────
+  eureka:
+    build: ./backEnd/eureka
+    ports:
+      - "8761:8761"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks: [skillup]
+
+  # ─── Configuration centralisee ──────────────────────────────────────────────
+  # Doit etre prete avant user et formation : leur « spring.config.import » echoue
+  # au demarrage si le config-server ne repond pas.
+  config-server:
+    build: ./backEnd/config-server
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:8761/eureka
+    depends_on:
+      eureka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/user/default"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks: [skillup]
+
+  # ─── Microservices metier ───────────────────────────────────────────────────
+  # Les variables d'environnement l'emportent sur ce que sert le config-server :
+  # dans l'ordre de precedence de Spring Boot, les variables d'environnement sont
+  # au-dessus des « config data » importees. C'est ce qui permet de rediriger la
+  # base vers le conteneur sans toucher aux fichiers .properties.
+  user:
+    build: ./backEnd/microservices/user
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:8761/eureka
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/pidev_user?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: skillup
+      # Reinitialisation de mot de passe. Vides par defaut : sans elles le service
+      # demarre normalement, seul l'envoi du mail echoue — et le code est alors
+      # journalise, ce qui suffit a demontrer la fonctionnalite.
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks: [skillup]
+
+  formation:
+    build: ./backEnd/microservices/Formation
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:8761/eureka
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/pidev_formation?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: skillup
+    depends_on:
+      mysql:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks: [skillup]
+
+  # ─── Recommandation (Python) ────────────────────────────────────────────────
+  recommandation:
+    build: ./backEnd/microservices/recommandation
+    environment:
+      SKILLUP_DB_URL: mysql+pymysql://root:skillup@mysql:3306/pidev_formation?charset=utf8mb4
+      EUREKA_URL: http://eureka:8761/eureka
+      # L'adresse publiee dans Eureka, celle que la gateway appellera. Ici le nom du
+      # service compose : « localhost » designerait le conteneur appelant.
+      EUREKA_INSTANCE_HOST: recommandation
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+    networks: [skillup]
+
+  # ─── Passerelle ─────────────────────────────────────────────────────────────
+  # Seul point d'entree du backend : le navigateur ne parle qu'a elle.
+  gateway:
+    build: ./backEnd/gateway
+    ports:
+      - "9090:9090"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:8761/eureka
+    depends_on:
+      eureka:
+        condition: service_healthy
+    networks: [skillup]
+
+  # ─── Front ──────────────────────────────────────────────────────────────────
+  frontend:
+    build: ./skillup_front
+    ports:
+      - "4200:80"
+    environment:
+      # L'URL est reecrite a la volee par nginx dans les reponses. Elle vaut
+      # « localhost » parce que c'est le NAVIGATEUR qui appelle la gateway, depuis
+      # l'hote — pas le conteneur du front.
+      GATEWAY_URL: http://localhost:9090
+    depends_on:
+      - gateway
+    networks: [skillup]
+
+networks:
+  skillup:
+    driver: bridge
+
+volumes:
+  mysql-data:
