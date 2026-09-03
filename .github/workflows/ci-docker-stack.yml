@@ -1,0 +1,69 @@
+name: Docker Stack CI
+
+# Verifie que la pile complete se construit encore : les sept images, plus la
+# syntaxe du fichier compose.
+#
+# Pourquoi ce workflow existe : les pipelines par service compilent le code et
+# jouent les tests, mais aucun ne construit d'image. Un Dockerfile casse passait
+# donc inapercu — c'est exactement ce qui est arrive au front, dont le Dockerfile
+# copiait dist/skillup-front au lieu de dist/skillup-front/browser. L'application
+# se construisait, les tests passaient, et l'image servait un listing de
+# repertoire.
+#
+# Le declenchement est volontairement etroit : construire sept images prend une
+# dizaine de minutes, et seuls les Dockerfiles, le compose et le jeu de donnees
+# initial peuvent casser cette etape. Le reste est deja couvert par les pipelines
+# par service.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '**/Dockerfile'
+      - 'docker-compose.yml'
+      - 'docker/**'
+      - '.github/workflows/ci-docker-stack.yml'
+  pull_request:
+    paths:
+      - '**/Dockerfile'
+      - 'docker-compose.yml'
+      - 'docker/**'
+      - '.github/workflows/ci-docker-stack.yml'
+  # Lancable a la main : utile pour verifier la pile avant une demonstration,
+  # sans avoir a pousser quoi que ce soit.
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: build de la pile
+    runs-on: ubuntu-latest
+    # Les builds Maven dans Docker sont longs ; sans plafond, un blocage
+    # consommerait les 6 heures par defaut.
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Le jeu de donnees initial n'est monte qu'au premier demarrage de MariaDB.
+      # S'il disparaissait, la pile demarrerait quand meme, avec une base vide —
+      # et le service de recommandation planterait faute de formations. Une
+      # verification a deux lignes vaut mieux que ce diagnostic-la.
+      - name: Le jeu de donnees initial est present
+        run: |
+          test -s docker/mysql-init/seed.sql
+          echo "seed.sql : $(wc -c < docker/mysql-init/seed.sql) octets"
+          grep -q "CREATE TABLE \`formations\`" docker/mysql-init/seed.sql
+          grep -q "FOREIGN_KEY_CHECKS=0" docker/mysql-init/seed.sql
+
+      # Valide la syntaxe et resout les variables avant de lancer dix minutes de
+      # build : une erreur de frappe dans le compose est signalee en deux secondes.
+      - name: Syntaxe du fichier compose
+        run: docker compose config --quiet
+
+      - name: Construction des sept images
+        run: docker compose build
+
+      - name: Images produites
+        if: always()
+        run: docker images --filter "reference=pidev-retake-*" --format "table {{.Repository}}\t{{.Size}}"
