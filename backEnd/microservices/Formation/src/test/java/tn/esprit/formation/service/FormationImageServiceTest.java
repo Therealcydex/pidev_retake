@@ -68,8 +68,7 @@ class FormationImageServiceTest {
 
         assertThat(saved.getFilename()).isEqualTo("cover.png");
         assertThat(saved.getContentType()).isEqualTo("image/png");
-        assertThat(saved.getSizeBytes()).isEqualTo(PNG_BYTES.length);
-        assertThat(saved.getUpdatedAt()).isNotNull();
+        assertThat(saved.getData()).isEqualTo(PNG_BYTES);
     }
 
     @Test

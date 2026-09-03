@@ -2,7 +2,6 @@ package tn.esprit.formation.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -30,7 +29,6 @@ import tn.esprit.formation.service.FormationImageService;
 import tn.esprit.formation.service.FormationService;
 import tn.esprit.formation.service.InscriptionService;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -89,18 +87,13 @@ public class FormationController {
         return ResponseEntity.ok(formationService.getById(id));
     }
 
-    /**
-     * The image itself. Served inline with an ETag so a second visit revalidates into a
-     * 304 instead of re-downloading it for every row of the list.
-     */
+    /** The image itself, served inline so an <img> tag can point straight at it. */
     @GetMapping("/{id}/image")
     public ResponseEntity<byte[]> getImage(@PathVariable Long id) {
         FormationImage image = imageService.get(id);
         return ResponseEntity.ok()
             .contentType(MediaType.parseMediaType(image.getContentType()))
             .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + image.getFilename() + "\"")
-            .eTag("\"" + image.getId() + "-" + image.getSizeBytes() + "\"")
-            .cacheControl(CacheControl.maxAge(Duration.ofHours(1)).cachePrivate())
             .body(image.getData());
     }
 
@@ -124,7 +117,7 @@ public class FormationController {
     public ResponseEntity<List<FormationResponse>> formationsOfUser(@PathVariable Long userId) {
         return ResponseEntity.ok(
             inscriptionService.formationsOfUser(userId).stream()
-                .map(formationService::toSummary)
+                .map(formationService::toResponse)
                 .toList());
     }
 

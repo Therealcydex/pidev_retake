@@ -71,20 +71,7 @@ describe('FormationService image URLs', () => {
     service = TestBed.inject(FormationService);
   });
 
-  /**
-   * The response is cached for an hour, so the version has to be in the URL — a
-   * replaced image must not keep serving the old bytes.
-   */
-  it('carries the image version so a replacement busts the cache', () => {
-    expect(service.imageUrl(3, 1787943839000)).toContain('/formations/3/image?v=1787943839000');
-  });
-
-  it('falls back to 0 for a row saved before versions existed', () => {
-    expect(service.imageUrl(3, null)).toContain('?v=0');
-    expect(service.imageUrl(3)).toContain('?v=0');
-  });
-
-  it('gives different URLs for different versions', () => {
-    expect(service.imageUrl(3, 1)).not.toEqual(service.imageUrl(3, 2));
+  it('points at the image endpoint for a formation', () => {
+    expect(service.imageUrl(3)).toContain('/formations/3/image');
   });
 });

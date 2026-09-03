@@ -28,20 +28,9 @@ public class ChapitreController {
         return ResponseEntity.status(HttpStatus.CREATED).body(chapitreService.create(request));
     }
 
-    @GetMapping
-    public ResponseEntity<List<ChapitreResponse>> listAll() {
-        return ResponseEntity.ok(chapitreService.listAll());
-    }
-
-    /** Declared before /{id} so "formation" is never read as a chapter id. */
     @GetMapping("/formation/{formationId}")
     public ResponseEntity<List<ChapitreResponse>> listByFormation(@PathVariable Long formationId) {
         return ResponseEntity.ok(chapitreService.listByFormation(formationId));
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<ChapitreResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(chapitreService.getById(id));
     }
 
     @PutMapping("/{id}")

@@ -13,6 +13,9 @@ public interface InscriptionRepository extends JpaRepository<Inscription, Long> 
 
     Optional<Inscription> findByFormationIdAndUserId(Long formationId, Long userId);
 
+    /** Removes every enrolment for a formation that is being deleted. */
+    void deleteByFormationId(Long formationId);
+
     boolean existsByFormationIdAndUserId(Long formationId, Long userId);
 
     /** Everyone enrolled in one formation — the admin and trainer view. */

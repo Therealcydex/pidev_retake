@@ -57,15 +57,8 @@ export class FormationService {
     return this.http.delete<void>(this.api + '/' + id + '/image');
   }
 
-  /**
-   * Direct <img src> target for the formation illustration.
-   *
-   * The response is cached for an hour, so the URL carries the image's own version
-   * (epoch millis of the last upload). That makes a replaced image show up everywhere
-   * immediately — across components, page loads and sessions — which a per-component
-   * counter could not do.
-   */
-  imageUrl(id: number, version?: number | null): string {
-    return this.api + '/' + id + '/image?v=' + (version ?? 0);
+  /** Direct <img src> target for the formation illustration. */
+  imageUrl(id: number): string {
+    return this.api + '/' + id + '/image';
   }
 }

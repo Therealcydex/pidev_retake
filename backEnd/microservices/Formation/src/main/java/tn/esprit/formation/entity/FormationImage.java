@@ -12,8 +12,6 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.Instant;
-
 /**
  * The illustration attached to a formation, kept in its own table so that listing
  * formations never drags the image bytes into memory.
@@ -30,11 +28,6 @@ public class FormationImage {
     private String filename;
 
     private String contentType;
-
-    private Long sizeBytes;
-
-    /** Bumped on every upload; used as the cache-busting key in image URLs. */
-    private Instant updatedAt;
 
     /** MEDIUMBLOB (16 MB) — well above the 5 MB upload cap, and signals the intended scale. */
     @Lob

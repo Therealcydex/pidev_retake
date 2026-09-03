@@ -29,12 +29,6 @@ public class CategorieService {
             .toList();
     }
 
-    public CategorieResponse getById(Long id) {
-        Categorie categorie = categorieRepository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Catégorie not found"));
-        return new CategorieResponse(categorie.getId(), categorie.getNom());
-    }
-
     public CategorieResponse update(Long id, CategorieRequest request) {
         Categorie categorie = categorieRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Catégorie not found"));

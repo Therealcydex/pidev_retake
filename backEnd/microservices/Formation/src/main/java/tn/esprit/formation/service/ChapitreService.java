@@ -32,23 +32,10 @@ public class ChapitreService {
         return toResponse(saved);
     }
 
-    public List<ChapitreResponse> listAll() {
-        return chapitreRepository.findAll().stream()
-            .map(this::toResponse)
-            .toList();
-    }
-
-    /** Filters in SQL, so the detail page does not download every chapter to show one formation's. */
     public List<ChapitreResponse> listByFormation(Long formationId) {
         return chapitreRepository.findByFormationId(formationId).stream()
             .map(this::toResponse)
             .toList();
-    }
-
-    public ChapitreResponse getById(Long id) {
-        Chapitre chapitre = chapitreRepository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Chapitre not found"));
-        return toResponse(chapitre);
     }
 
     public ChapitreResponse update(Long id, ChapitreRequest request) {

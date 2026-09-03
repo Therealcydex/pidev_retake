@@ -77,7 +77,7 @@ export class FormationDetailComponent implements OnInit {
   }
 
   get imageSrc(): string {
-    return this.formationService.imageUrl(this.formation!.id!, this.formation!.imageVersion);
+    return this.formationService.imageUrl(this.formation!.id!);
   }
 
   /** Sentence-case French labels, matching the catalogue cards. */

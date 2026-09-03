@@ -135,6 +135,26 @@ class FormationIntegrationTest {
     }
 
     @Test
+    @DisplayName("deleting a formation also removes the enrolments that point at it")
+    void deletingAFormationRemovesItsEnrolments() throws Exception {
+        Long id = createFormationAs(TRAINER_A);
+
+        callerIs(TRAINEE_ID, "TRAINEE");
+        mvc.perform(post("/formations/" + id + "/inscription"))
+            .andExpect(status().isCreated());
+        assertThat(inscriptionRepository.findByUserId(TRAINEE_ID)).hasSize(1);
+
+        // Without the cleanup in FormationService.delete, the foreign key on
+        // inscriptions.formation_id rejects this and the caller sees a 500.
+        callerIs(TRAINER_A, "TRAINER");
+        mvc.perform(delete("/formations/" + id))
+            .andExpect(status().isNoContent());
+
+        assertThat(formationRepository.findById(id)).isEmpty();
+        assertThat(inscriptionRepository.findAll()).isEmpty();
+    }
+
+    @Test
     @DisplayName("a trainer may edit their own formation but not another trainer's")
     void ownershipGovernsEditing() throws Exception {
         Long id = createFormationAs(TRAINER_A);

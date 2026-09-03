@@ -93,7 +93,7 @@ export class FormationFormComponent implements OnInit, OnDestroy {
   get imageSrc(): string | null {
     if (this.pendingPreview) return this.pendingPreview;
     if (this.editId !== null && this.formation.hasImage) {
-      return this.formationService.imageUrl(this.editId, this.formation.imageVersion);
+      return this.formationService.imageUrl(this.editId);
     }
     return null;
   }

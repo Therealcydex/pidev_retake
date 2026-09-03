@@ -11,7 +11,6 @@ export interface Formation {
   hasImage?: boolean;
   imageFilename?: string;
   chapitreCount?: number;
-  imageVersion?: number;
   ownerId?: number;
 }
 

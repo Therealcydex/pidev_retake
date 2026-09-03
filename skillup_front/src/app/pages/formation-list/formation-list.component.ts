@@ -211,7 +211,7 @@ export class FormationListComponent implements OnInit {
   }
 
   imageSrc(f: Formation): string {
-    return this.formationService.imageUrl(f.id!, f.imageVersion);
+    return this.formationService.imageUrl(f.id!);
   }
 
   delete(id: number): void {

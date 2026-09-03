@@ -19,8 +19,6 @@ public class FormationResponse {
     private boolean hasImage;
     private String imageFilename;
     private long chapitreCount;
-    /** Epoch millis of the last image upload; the cache-busting key for image URLs. */
-    private Long imageVersion;
     /** Who created the formation; drives whether a trainer may edit it. */
     private Long ownerId;
 }

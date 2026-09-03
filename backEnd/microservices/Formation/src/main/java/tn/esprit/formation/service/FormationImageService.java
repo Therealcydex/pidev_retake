@@ -12,7 +12,6 @@ import tn.esprit.formation.repository.FormationImageRepository;
 import tn.esprit.formation.repository.FormationRepository;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.util.Set;
 
 @Service
@@ -68,8 +67,6 @@ public class FormationImageService {
         image.setFormation(formation);
         image.setFilename(name);
         image.setContentType(contentType);
-        image.setSizeBytes((long) bytes.length);
-        image.setUpdatedAt(Instant.now());
         image.setData(bytes);
 
         return imageRepository.save(image);

@@ -12,6 +12,7 @@ import com.itextpdf.layout.properties.TextAlignment;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import tn.esprit.formation.dto.FormationRequest;
 import tn.esprit.formation.dto.FormationResponse;
@@ -24,12 +25,11 @@ import tn.esprit.formation.repository.CategorieRepository;
 import tn.esprit.formation.repository.ChapitreRepository;
 import tn.esprit.formation.repository.FormationImageRepository;
 import tn.esprit.formation.repository.FormationRepository;
+import tn.esprit.formation.repository.InscriptionRepository;
 
 import java.io.ByteArrayOutputStream;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +49,7 @@ public class FormationService {
     private final CategorieRepository categorieRepository;
     private final FormationImageRepository imageRepository;
     private final ChapitreRepository chapitreRepository;
+    private final InscriptionRepository inscriptionRepository;
 
     public FormationResponse create(FormationRequest request, Long ownerId) {
         Categorie categorie = categorieRepository.findById(request.getCategorieId())
@@ -67,24 +68,8 @@ public class FormationService {
     }
 
     public List<FormationResponse> listAll() {
-        // One query for every attached image's metadata, rather than a lookup per row.
-        Map<Long, String> filenames = new HashMap<>();
-        Map<Long, Long> versions = new HashMap<>();
-        for (Object[] row : imageRepository.findAllImageMeta()) {
-            filenames.put((Long) row[0], (String) row[1]);
-            versions.put((Long) row[0], toMillis((Instant) row[2]));
-        }
-
-        // Likewise for the chapter counts shown on each catalogue card.
-        Map<Long, Long> chapitreCounts = new HashMap<>();
-        for (Object[] row : chapitreRepository.countGroupedByFormation()) {
-            chapitreCounts.put((Long) row[0], (Long) row[1]);
-        }
-
         return formationRepository.findAll().stream()
-            .map(f -> toResponse(f, filenames.get(f.getId()),
-                chapitreCounts.getOrDefault(f.getId(), 0L),
-                versions.get(f.getId())))
+            .map(this::toResponse)
             .toList();
     }
 
@@ -111,8 +96,20 @@ public class FormationService {
         return toResponse(saved);
     }
 
+    /**
+     * Chapters go with the formation through cascade = ALL on Formation.chapitres, but
+     * enrolments and the image own their side of the foreign key and Formation declares
+     * no cascade to them — so they have to be removed first, or the database rejects the
+     * delete and the caller sees a 500.
+     */
+    @Transactional
     public void delete(Long id) {
-        formationRepository.deleteById(id);
+        Formation formation = formationRepository.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Formation not found"));
+
+        inscriptionRepository.deleteByFormationId(id);
+        imageRepository.deleteByFormationId(id);
+        formationRepository.delete(formation);
     }
 
     public byte[] exportPdf(Long id) {
@@ -231,25 +228,10 @@ public class FormationService {
         );
     }
 
-    /** Lightweight mapper for lists that only need identity — no image or chapter lookups. */
-    public FormationResponse toSummary(Formation f) {
-        return new FormationResponse(
-            f.getId(), f.getTitre(), f.getDescription(), f.getDescriptionDetaillee(),
-            f.getNiveau(), f.getCategorie().getId(), f.getCategorie().getNom(),
-            false, null, 0L, null, f.getOwnerId());
-    }
+    /** The one mapper: looks up the formation's image filename and chapter count. */
+    public FormationResponse toResponse(Formation f) {
+        String imageFilename = imageRepository.findFilenameByFormationId(f.getId()).orElse(null);
 
-    private FormationResponse toResponse(Formation f) {
-        List<Object[]> meta = imageRepository.findMetaByFormationId(f.getId());
-        String imageFilename = meta.isEmpty() ? null : (String) meta.get(0)[0];
-        Long imageVersion = meta.isEmpty() ? null : toMillis((Instant) meta.get(0)[1]);
-
-        return toResponse(f, imageFilename,
-            chapitreRepository.countByFormationId(f.getId()), imageVersion);
-    }
-
-    private FormationResponse toResponse(Formation f, String imageFilename,
-                                         long chapitreCount, Long imageVersion) {
         return new FormationResponse(
             f.getId(),
             f.getTitre(),
@@ -260,14 +242,8 @@ public class FormationService {
             f.getCategorie().getNom(),
             imageFilename != null,
             imageFilename,
-            chapitreCount,
-            imageVersion,
+            chapitreRepository.countByFormationId(f.getId()),
             f.getOwnerId()
         );
-    }
-
-    /** Rows written before updatedAt existed have none; 0 is a stable key for those. */
-    private Long toMillis(Instant instant) {
-        return instant == null ? 0L : instant.toEpochMilli();
     }
 }

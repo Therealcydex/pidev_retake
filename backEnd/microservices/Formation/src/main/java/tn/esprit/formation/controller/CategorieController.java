@@ -33,11 +33,6 @@ public class CategorieController {
         return ResponseEntity.ok(categorieService.listAll());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<CategorieResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(categorieService.getById(id));
-    }
-
     @PutMapping("/{id}")
     public ResponseEntity<CategorieResponse> update(@PathVariable Long id, @RequestBody CategorieRequest request) {
         return ResponseEntity.ok(categorieService.update(id, request));
