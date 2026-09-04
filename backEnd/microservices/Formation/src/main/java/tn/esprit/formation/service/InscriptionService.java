@@ -28,6 +28,7 @@ public class InscriptionService {
     private final InscriptionRepository inscriptionRepository;
     private final FormationRepository formationRepository;
     private final CurrentUserService currentUserService;
+    private final FormationAccessService access;
     private final UserClient userClient;
 
     /** Enrols the caller. Enrolling is a trainee action; staff manage the catalogue. */
@@ -111,7 +112,7 @@ public class InscriptionService {
     /** Which formations one user is enrolled in — the admin's per-user view. */
     @Transactional(readOnly = true)
     public List<Formation> formationsOfUser(Long userId) {
-        requireAdmin();
+        access.requireAdmin();
         return inscriptionRepository.findByUserId(userId).stream()
             .map(Inscription::getFormation)
             .toList();
@@ -120,7 +121,7 @@ public class InscriptionService {
     /** How many formations each user follows, keyed by user id. Admin only. */
     @Transactional(readOnly = true)
     public Map<Long, Long> countsByUser() {
-        requireAdmin();
+        access.requireAdmin();
         Map<Long, Long> counts = new HashMap<>();
         for (Object[] row : inscriptionRepository.countGroupedByUser()) {
             counts.put((Long) row[0], (Long) row[1]);
@@ -128,10 +129,4 @@ public class InscriptionService {
         return counts;
     }
 
-    private void requireAdmin() {
-        UserDto caller = currentUserService.currentUser();
-        if (!"ADMIN".equals(caller.getRole())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Réservé à l'administrateur");
-        }
-    }
 }

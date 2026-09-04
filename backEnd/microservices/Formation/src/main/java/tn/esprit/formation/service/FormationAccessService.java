@@ -26,6 +26,18 @@ public class FormationAccessService {
     private final CurrentUserService currentUserService;
     private final FormationRepository formationRepository;
 
+    /**
+     * Shared reference data — categories, and the admin-only reports — belongs to the
+     * whole catalogue rather than to one trainer, so only an admin may change it.
+     */
+    public void requireAdmin() {
+        UserDto user = currentUserService.currentUser();
+        if (!"ADMIN".equals(user.getRole())) {
+            throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN, "Réservé à l'administrateur");
+        }
+    }
+
     /** Creating a formation needs no owner yet — any staff member may. */
     public void requireStaff() {
         UserDto user = currentUserService.currentUser();

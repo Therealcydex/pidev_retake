@@ -18,8 +18,13 @@ import java.util.List;
 public class ChapitreService {
     private final ChapitreRepository chapitreRepository;
     private final FormationRepository formationRepository;
+    private final FormationAccessService access;
 
     public ChapitreResponse create(ChapitreRequest request) {
+        // A chapter belongs to a formation, so it inherits that formation's rule: an admin
+        // may add one anywhere, a trainer only to a formation they created.
+        access.requireCanEdit(request.getFormationId());
+
         Formation formation = formationRepository.findById(request.getFormationId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Formation not found"));
 
@@ -42,6 +47,13 @@ public class ChapitreService {
         Chapitre chapitre = chapitreRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Chapitre not found"));
 
+        // Both sides matter, because this call can move a chapter between formations: the
+        // caller must be allowed to take it out of the one it is in *and* to put it into
+        // the one the request names. Checking only the target would let a trainer pull
+        // someone else's chapter into their own formation.
+        access.requireCanEdit(chapitre.getFormation().getId());
+        access.requireCanEdit(request.getFormationId());
+
         Formation formation = formationRepository.findById(request.getFormationId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Formation not found"));
 
@@ -54,7 +66,13 @@ public class ChapitreService {
     }
 
     public void delete(Long id) {
-        chapitreRepository.deleteById(id);
+        // Loaded rather than deleteById, both to find out which formation owns it and so a
+        // missing id is a 404 instead of the 500 deleteById raises.
+        Chapitre chapitre = chapitreRepository.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Chapitre not found"));
+
+        access.requireCanEdit(chapitre.getFormation().getId());
+        chapitreRepository.delete(chapitre);
     }
 
     private ChapitreResponse toResponse(Chapitre c) {

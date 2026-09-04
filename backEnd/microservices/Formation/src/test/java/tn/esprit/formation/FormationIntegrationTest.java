@@ -16,10 +16,12 @@ import tn.esprit.formation.dto.FormationRequest;
 import tn.esprit.formation.entity.Categorie;
 import tn.esprit.formation.entity.Niveau;
 import tn.esprit.formation.repository.CategorieRepository;
+import tn.esprit.formation.repository.ChapitreRepository;
 import tn.esprit.formation.repository.FormationRepository;
 import tn.esprit.formation.repository.InscriptionRepository;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -50,6 +52,7 @@ class FormationIntegrationTest {
     @Autowired private MockMvc mvc;
     @Autowired private ObjectMapper json;
     @Autowired private CategorieRepository categorieRepository;
+    @Autowired private ChapitreRepository chapitreRepository;
     @Autowired private FormationRepository formationRepository;
     @Autowired private InscriptionRepository inscriptionRepository;
 
@@ -281,5 +284,162 @@ class FormationIntegrationTest {
     @DisplayName("an unknown formation is a 404")
     void unknownFormationIsNotFound() throws Exception {
         mvc.perform(get("/formations/9999")).andExpect(status().isNotFound());
+    }
+
+    /* ---------- chapters inherit the formation's ownership rule ---------- */
+
+    private String chapitreBody(String titre, Long formationId) throws Exception {
+        return json.writeValueAsString(
+            Map.of("titre", titre, "contenu", "contenu", "formationId", formationId));
+    }
+
+    private Long createChapitreAs(long userId, String role, Long formationId) throws Exception {
+        callerIs(userId, role);
+        String response = mvc.perform(post("/chapitres")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(chapitreBody("Chapitre", formationId)))
+            .andExpect(status().isCreated())
+            .andReturn().getResponse().getContentAsString();
+        return json.readTree(response).get("id").asLong();
+    }
+
+    @Test
+    @DisplayName("a trainee cannot add a chapter")
+    void traineeCannotAddAChapter() throws Exception {
+        Long formationId = createFormationAs(TRAINER_A);
+
+        callerIs(TRAINEE_ID, "TRAINEE");
+        mvc.perform(post("/chapitres")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(chapitreBody("Chapitre", formationId)))
+            .andExpect(status().isForbidden());
+
+        assertThat(chapitreRepository.findByFormationId(formationId)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("a trainer cannot add a chapter to another trainer's formation")
+    void trainerCannotAddAChapterElsewhere() throws Exception {
+        Long formationId = createFormationAs(TRAINER_A);
+
+        callerIs(TRAINER_B, "TRAINER");
+        mvc.perform(post("/chapitres")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(chapitreBody("Chapitre", formationId)))
+            .andExpect(status().isForbidden());
+
+        assertThat(chapitreRepository.findByFormationId(formationId)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("the owner and an admin may both add a chapter")
+    void ownerAndAdminCanAddAChapter() throws Exception {
+        Long formationId = createFormationAs(TRAINER_A);
+
+        createChapitreAs(TRAINER_A, "TRAINER", formationId);
+        createChapitreAs(ADMIN_ID, "ADMIN", formationId);
+
+        assertThat(chapitreRepository.findByFormationId(formationId)).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("a trainer cannot edit or delete another trainer's chapter")
+    void trainerCannotTouchAnotherTrainersChapter() throws Exception {
+        Long formationId = createFormationAs(TRAINER_A);
+        Long chapitreId = createChapitreAs(TRAINER_A, "TRAINER", formationId);
+
+        callerIs(TRAINER_B, "TRAINER");
+
+        mvc.perform(put("/chapitres/" + chapitreId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(chapitreBody("Détourné", formationId)))
+            .andExpect(status().isForbidden());
+
+        mvc.perform(delete("/chapitres/" + chapitreId))
+            .andExpect(status().isForbidden());
+
+        assertThat(chapitreRepository.findById(chapitreId))
+            .get()
+            .extracting(c -> c.getTitre())
+            .isEqualTo("Chapitre");
+    }
+
+    /**
+     * The update call reassigns the formation from the request body, so it can move a
+     * chapter. Checking only the target formation would let a trainer pull someone else's
+     * chapter into their own; checking only the current one would let them push their own
+     * chapter into a formation they do not own.
+     */
+    @Test
+    @DisplayName("a trainer cannot move a chapter across an ownership boundary")
+    void trainerCannotMoveAChapterAcrossOwnership() throws Exception {
+        Long formationA = createFormationAs(TRAINER_A);
+        Long formationB = createFormationAs(TRAINER_B);
+        Long chapitreOfA = createChapitreAs(TRAINER_A, "TRAINER", formationA);
+        Long chapitreOfB = createChapitreAs(TRAINER_B, "TRAINER", formationB);
+
+        callerIs(TRAINER_B, "TRAINER");
+
+        // Pulling A's chapter into B's own formation.
+        mvc.perform(put("/chapitres/" + chapitreOfA)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(chapitreBody("Volé", formationB)))
+            .andExpect(status().isForbidden());
+
+        // Pushing B's own chapter into A's formation.
+        mvc.perform(put("/chapitres/" + chapitreOfB)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(chapitreBody("Déposé", formationA)))
+            .andExpect(status().isForbidden());
+
+        assertThat(chapitreRepository.findByFormationId(formationA)).hasSize(1);
+        assertThat(chapitreRepository.findByFormationId(formationB)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("deleting a chapter that does not exist is a 404, not a 500")
+    void deletingAnUnknownChapterIsNotFound() throws Exception {
+        callerIs(ADMIN_ID, "ADMIN");
+        mvc.perform(delete("/chapitres/9999")).andExpect(status().isNotFound());
+    }
+
+    /* ---------- categories are shared reference data: admin only ---------- */
+
+    @Test
+    @DisplayName("a trainer cannot create, rename or delete a category")
+    void trainerCannotManageCategories() throws Exception {
+        callerIs(TRAINER_A, "TRAINER");
+
+        mvc.perform(post("/categories")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nom\":\"Nouvelle\"}"))
+            .andExpect(status().isForbidden());
+
+        mvc.perform(put("/categories/" + categorieId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nom\":\"Renommée\"}"))
+            .andExpect(status().isForbidden());
+
+        mvc.perform(delete("/categories/" + categorieId))
+            .andExpect(status().isForbidden());
+
+        assertThat(categorieRepository.findById(categorieId))
+            .get()
+            .extracting(c -> c.getNom())
+            .isEqualTo("IT");
+    }
+
+    @Test
+    @DisplayName("an admin may manage categories, and anyone may read them")
+    void adminManagesCategoriesAndReadingStaysOpen() throws Exception {
+        mvc.perform(get("/categories")).andExpect(status().isOk());
+
+        callerIs(ADMIN_ID, "ADMIN");
+        mvc.perform(post("/categories")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nom\":\"Nouvelle\"}"))
+            .andExpect(status().isCreated());
+
+        assertThat(categorieRepository.findAll()).hasSize(2);
     }
 }
