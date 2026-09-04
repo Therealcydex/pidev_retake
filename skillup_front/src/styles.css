@@ -803,6 +803,19 @@ html, body {
   background: #fcfcfd;
 }
 
+/*
+ * The enrolment list has no natural bound — a popular formation carries dozens, and at
+ * ~60px a row that pushes the rest of the sidebar off the screen. Cap it and scroll:
+ * the count is already on the chip next to the heading, so nothing is hidden, and the
+ * card keeps the same height whether there are 3 enrolments or 300.
+ */
+.su-inscrits-list {
+  max-height: 380px;
+  overflow-y: auto;
+  /* Room for the scrollbar so it never sits on top of the date. */
+  padding-right: 4px;
+}
+
 .su-chapter-num {
   font: 600 12px 'Source Sans 3', sans-serif;
   color: var(--su-placeholder);

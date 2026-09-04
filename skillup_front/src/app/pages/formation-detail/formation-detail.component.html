@@ -80,14 +80,16 @@
             Aucun apprenant inscrit pour le moment.
           </div>
 
-          <div *ngFor="let i of inscriptions" class="su-chapter-row">
-            <div style="flex:1">
-              <div class="su-chapter-title">{{ i.username }}</div>
-              <div class="su-cell-desc">{{ i.email }}</div>
+          <div class="su-inscrits-list">
+            <div *ngFor="let i of inscriptions" class="su-chapter-row">
+              <div style="flex:1">
+                <div class="su-chapter-title">{{ i.username }}</div>
+                <div class="su-cell-desc">{{ i.email }}</div>
+              </div>
+              <span class="su-hint" style="margin:0">
+                {{ i.dateInscription | date:'dd/MM/yyyy' }}
+              </span>
             </div>
-            <span class="su-hint" style="margin:0">
-              {{ i.dateInscription | date:'dd/MM/yyyy' }}
-            </span>
           </div>
         </div>
 
