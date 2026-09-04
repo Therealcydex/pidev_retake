@@ -35,10 +35,10 @@
           <div>
             <label class="su-label-text" for="description">Description brève</label>
             <input id="description" type="text" class="su-input" name="description"
-                   maxlength="50" [(ngModel)]="formation.description" required
+                   maxlength="100" [(ngModel)]="formation.description" required
                    placeholder="Résumé court affiché sur la carte">
-            <p class="su-hint" [class.su-hint-warn]="formation.description.length > 50">
-              Affichée sur la carte du catalogue · {{ formation.description.length }} / 50 caractères
+            <p class="su-hint" [class.su-hint-warn]="formation.description.length > 100">
+              Affichée sur la carte du catalogue · {{ formation.description.length }} / 100 caractères
             </p>
           </div>
 

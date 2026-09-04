@@ -13,11 +13,11 @@ public class FormationRequest {
     private String titre;
 
     /**
-     * Mirrors maxlength="50" on the form. The browser limit is a convenience; this is
+     * Mirrors maxlength="100" on the form. The browser limit is a convenience; this is
      * the one that holds for any client, including curl.
      */
     @NotBlank(message = "La description brève est obligatoire")
-    @Size(max = 50, message = "La description brève ne peut pas dépasser 50 caractères")
+    @Size(max = 100, message = "La description brève ne peut pas dépasser 100 caractères")
     private String description;
 
     /** Deliberately unbounded — it is mapped to TEXT and shown on the detail page. */

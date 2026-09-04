@@ -184,6 +184,13 @@ export class FormationListComponent implements OnInit {
     return labels[niveau] || niveau;
   }
 
+  /** Card preview: the description is capped at 100, the card shows the first 50. */
+  apercu(description: string): string {
+    return description.length > 50
+      ? description.slice(0, 50).trimEnd() + '…'
+      : description;
+  }
+
   /**
    * Placeholder cover colour for a formation with no image, from the palette the design
    * uses. Keyed on the id so a card keeps the same colour between loads.

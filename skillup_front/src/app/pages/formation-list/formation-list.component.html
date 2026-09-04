@@ -88,7 +88,7 @@
         <h3 class="su-fcard-title">
           <a [routerLink]="['/formations', f.id]">{{ f.titre }}</a>
         </h3>
-        <p class="su-fcard-desc">{{ f.description }}</p>
+        <p class="su-fcard-desc">{{ apercu(f.description) }}</p>
 
         <div class="su-fcard-meta">
           <span class="su-level">{{ niveauLabel(f.niveau) }}</span>

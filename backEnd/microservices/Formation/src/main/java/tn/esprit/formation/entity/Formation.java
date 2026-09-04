@@ -28,8 +28,8 @@ public class Formation {
 
     private String titre;
 
-    /** Short blurb shown on the catalogue card; the schema enforces the same 50 as the DTO. */
-    @Column(length = 50)
+    /** Short blurb shown on the catalogue card; the schema enforces the same 100 as the DTO. */
+    @Column(length = 100)
     private String description;
 
     /** Long-form text shown only on the detail page; TEXT rather than the default VARCHAR(255). */

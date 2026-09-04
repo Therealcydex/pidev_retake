@@ -122,16 +122,16 @@ class FormationIntegrationTest {
     }
 
     @Test
-    @DisplayName("Bean Validation rejects a brief description over 50 characters")
+    @DisplayName("Bean Validation rejects a brief description over 100 characters")
     void descriptionIsValidatedAtTheApiBoundary() throws Exception {
         callerIs(TRAINER_A, "TRAINER");
 
         mvc.perform(post("/formations")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body("Spring Boot", "x".repeat(51))))
+                .content(body("Spring Boot", "x".repeat(101))))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.message").value(
-                "La description brève ne peut pas dépasser 50 caractères"));
+                "La description brève ne peut pas dépasser 100 caractères"));
     }
 
     @Test
