@@ -23,6 +23,10 @@ public class FormationImageService {
 
     private final FormationRepository formationRepository;
     private final FormationImageRepository imageRepository;
+    private final FormationImageStorage storage;
+
+    /** Filename, type and bytes — everything the controller needs to serve the image. */
+    public record ImageContent(String filename, String contentType, byte[] bytes) {}
 
     @Transactional
     public FormationImage store(Long formationId, MultipartFile file) {
@@ -67,23 +71,27 @@ public class FormationImageService {
         image.setFormation(formation);
         image.setFilename(name);
         image.setContentType(contentType);
-        image.setData(bytes);
+        storage.store(image, bytes);
 
         return imageRepository.save(image);
     }
 
     @Transactional(readOnly = true)
-    public FormationImage get(Long formationId) {
-        return imageRepository.findByFormationId(formationId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No image for this formation"));
+    public ImageContent load(Long formationId) {
+        FormationImage image = requireImage(formationId);
+        return new ImageContent(image.getFilename(), image.getContentType(), storage.load(image));
     }
 
     @Transactional
     public void delete(Long formationId) {
-        if (!imageRepository.existsByFormationId(formationId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No image for this formation");
-        }
+        FormationImage image = requireImage(formationId);
+        storage.delete(image);
         imageRepository.deleteByFormationId(formationId);
+    }
+
+    private FormationImage requireImage(Long formationId) {
+        return imageRepository.findByFormationId(formationId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No image for this formation"));
     }
 
     /** PNG: 89 50 4E 47 — JPEG: FF D8 FF — WebP: "RIFF" then "WEBP" at offset 8. */

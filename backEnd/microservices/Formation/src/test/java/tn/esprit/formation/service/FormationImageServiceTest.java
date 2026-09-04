@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
@@ -37,6 +38,13 @@ class FormationImageServiceTest {
 
     @Mock private FormationRepository formationRepository;
     @Mock private FormationImageRepository imageRepository;
+
+    /**
+     * The real storage rather than a mock: it is three lines, and using it keeps these
+     * tests asserting on the bytes that actually come back out.
+     */
+    @Spy private FormationImageStorage storage = new DatabaseImageStorage();
+
     @InjectMocks private FormationImageService service;
 
     private void formationExists() {
@@ -136,5 +144,34 @@ class FormationImageServiceTest {
 
         assertThat(saved.getId()).isEqualTo(42L);
         assertThat(saved.getFilename()).isEqualTo("new.png");
+    }
+
+    /**
+     * Deleting has to drop the bytes and the row. On the database implementation the row
+     * carries both, so the first call is a no-op — but a bucket-backed storage would need
+     * it, and forgetting it there is how orphan objects accumulate.
+     */
+    @Test
+    void deleteDropsTheBytesAndTheRow() {
+        FormationImage existing = new FormationImage();
+        existing.setData(PNG_BYTES);
+        when(imageRepository.findByFormationId(FORMATION_ID)).thenReturn(Optional.of(existing));
+
+        service.delete(FORMATION_ID);
+
+        verify(storage).delete(existing);
+        verify(imageRepository).deleteByFormationId(FORMATION_ID);
+    }
+
+    @Test
+    void deletingAMissingImageIsNotFound() {
+        when(imageRepository.findByFormationId(FORMATION_ID)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.delete(FORMATION_ID))
+            .isInstanceOf(ResponseStatusException.class)
+            .extracting(e -> ((ResponseStatusException) e).getStatusCode().value())
+            .isEqualTo(HttpStatus.NOT_FOUND.value());
+
+        verify(imageRepository, never()).deleteByFormationId(FORMATION_ID);
     }
 }

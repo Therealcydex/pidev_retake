@@ -22,7 +22,6 @@ import tn.esprit.formation.dto.FormationRequest;
 import tn.esprit.formation.dto.FormationResponse;
 import tn.esprit.formation.dto.FormationStatsResponse;
 import tn.esprit.formation.dto.InscriptionResponse;
-import tn.esprit.formation.entity.FormationImage;
 import tn.esprit.formation.service.CurrentUserService;
 import tn.esprit.formation.service.FormationAccessService;
 import tn.esprit.formation.service.FormationImageService;
@@ -90,11 +89,11 @@ public class FormationController {
     /** The image itself, served inline so an <img> tag can point straight at it. */
     @GetMapping("/{id}/image")
     public ResponseEntity<byte[]> getImage(@PathVariable Long id) {
-        FormationImage image = imageService.get(id);
+        FormationImageService.ImageContent image = imageService.load(id);
         return ResponseEntity.ok()
-            .contentType(MediaType.parseMediaType(image.getContentType()))
-            .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + image.getFilename() + "\"")
-            .body(image.getData());
+            .contentType(MediaType.parseMediaType(image.contentType()))
+            .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + image.filename() + "\"")
+            .body(image.bytes());
     }
 
     @DeleteMapping("/{id}/image")

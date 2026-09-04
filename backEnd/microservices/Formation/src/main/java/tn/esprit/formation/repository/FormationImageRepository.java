@@ -11,8 +11,6 @@ import java.util.Optional;
 public interface FormationImageRepository extends JpaRepository<FormationImage, Long> {
     Optional<FormationImage> findByFormationId(Long formationId);
 
-    boolean existsByFormationId(Long formationId);
-
     void deleteByFormationId(Long formationId);
 
     /** The filename alone, so listing formations never loads the image bytes. */
