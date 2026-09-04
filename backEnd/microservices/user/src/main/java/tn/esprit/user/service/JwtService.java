@@ -22,12 +22,17 @@ public class JwtService {
 
     private final Key signingKey;
 
+    // Le secret est fourni en Base64 : HS256 exige une cle d'au moins 256 bits, qu'une
+    // phrase de passe tapee a la main ne garantit pas.
     public JwtService(@Value("${jwt.secret}") String secret) {
         byte[] keyBytes = java.util.Base64.getDecoder().decode(secret);
         this.signingKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String generateToken(User user) {
+        // role et userId voyagent dans le jeton pour que JwtAuthFilter reconstitue
+        // l'identite du client sans relire la base a chaque requete. Ils sont lisibles
+        // par tous : la signature empeche de les modifier, pas de les voir.
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", user.getRole().name());
         claims.put("userId", user.getId());

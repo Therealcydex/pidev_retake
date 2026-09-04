@@ -13,6 +13,12 @@ import tn.esprit.formation.client.UserDto;
 public class CurrentUserService {
     private final UserClient userClient;
 
+    /**
+     * The two failures are told apart on purpose: "your token was refused" is the caller's
+     * problem (401), "the USER service could not answer" is ours (502). Collapsing them
+     * would report an outage as a login failure, and send the user to re-authenticate for
+     * a problem no amount of logging in can fix.
+     */
     public UserDto currentUser() {
         try {
             return userClient.me();

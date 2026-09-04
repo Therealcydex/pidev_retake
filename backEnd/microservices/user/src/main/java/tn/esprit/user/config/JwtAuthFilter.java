@@ -19,6 +19,14 @@ import tn.esprit.user.service.JwtService;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Ce filtre authentifie, il n'autorise pas.
+ *
+ * Quand le jeton manque ou ne vaut rien, il laisse passer la requete sans rien poser dans
+ * le SecurityContext, au lieu de renvoyer une erreur lui-meme. C'est voulu : la decision
+ * appartient a la chaine de securite juste apres, qui laisse /auth/login passer et refuse
+ * le reste. Un filtre qui trancherait ici rendrait les endpoints publics inaccessibles.
+ */
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {

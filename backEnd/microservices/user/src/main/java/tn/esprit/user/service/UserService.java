@@ -66,6 +66,8 @@ public class UserService {
     }
 
     public AuthResponse login(LoginRequest request) {
+        // Le meme message pour « compte inconnu » et « mauvais mot de passe » : deux
+        // messages differents transformeraient le formulaire en test d'existence de compte.
         User user = userRepository.findByUsername(request.getUsername())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
 
@@ -95,6 +97,9 @@ public class UserService {
      * transformerait ce point d'entree en moyen de decouvrir qui est inscrit.
      */
     public void forgotPassword(String email) {
+        // ifPresent sans else, volontairement : une adresse inconnue obtient la meme
+        // reponse qu'une adresse connue. Repondre « cet email n'existe pas » reviendrait
+        // a publier la liste des comptes.
         userRepository.findByEmail(email).ifPresent(user -> {
             String jeton = genererJeton();
             user.setResetToken(jeton);
