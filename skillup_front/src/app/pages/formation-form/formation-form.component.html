@@ -68,7 +68,7 @@
           </div>
         </div>
 
-        <div class="su-card su-card-pad" style="margin-top:20px" *ngIf="editId">
+        <div class="su-card su-card-pad" style="margin-top:20px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
             <h2 class="su-h2" style="margin:0">Chapitres</h2>
             <span class="su-chip">{{ chapitres.length }}</span>
@@ -122,6 +122,9 @@
                     [disabled]="!newChapitreTitre.trim()" (click)="addChapitre()">
               + Ajouter un chapitre
             </button>
+            <p class="su-hint" *ngIf="editId === null">
+              Les chapitres seront créés en même temps que la formation.
+            </p>
           </div>
         </div>
       </div>
