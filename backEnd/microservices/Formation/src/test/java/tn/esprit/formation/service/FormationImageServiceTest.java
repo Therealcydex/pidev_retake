@@ -43,7 +43,7 @@ class FormationImageServiceTest {
      * The real storage rather than a mock: it is three lines, and using it keeps these
      * tests asserting on the bytes that actually come back out.
      */
-    @Spy private FormationImageStorage storage = new DatabaseImageStorage();
+    @Spy private FormationImageStorage storage = new FormationImageStorage.DatabaseImageStorage();
 
     @InjectMocks private FormationImageService service;
 

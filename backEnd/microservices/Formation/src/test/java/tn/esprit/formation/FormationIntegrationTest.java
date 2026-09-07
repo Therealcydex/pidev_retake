@@ -12,7 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import tn.esprit.formation.client.UserClient;
 import tn.esprit.formation.client.UserDto;
-import tn.esprit.formation.dto.FormationRequest;
+import tn.esprit.formation.dto.FormationDtos;
 import tn.esprit.formation.entity.Categorie;
 import tn.esprit.formation.entity.Niveau;
 import tn.esprit.formation.repository.CategorieRepository;
@@ -77,7 +77,7 @@ class FormationIntegrationTest {
     }
 
     private String body(String titre, String description) throws Exception {
-        FormationRequest r = new FormationRequest();
+        FormationDtos.Request r = new FormationDtos.Request();
         r.setTitre(titre);
         r.setDescription(description);
         r.setNiveau(Niveau.DEBUTANT);

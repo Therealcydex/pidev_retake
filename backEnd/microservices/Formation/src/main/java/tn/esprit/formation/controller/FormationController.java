@@ -18,9 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import tn.esprit.formation.client.UserDto;
-import tn.esprit.formation.dto.FormationRequest;
-import tn.esprit.formation.dto.FormationResponse;
-import tn.esprit.formation.dto.FormationStatsResponse;
+import tn.esprit.formation.dto.FormationDtos;
 import tn.esprit.formation.dto.InscriptionResponse;
 import tn.esprit.formation.service.CurrentUserService;
 import tn.esprit.formation.service.FormationAccessService;
@@ -42,19 +40,19 @@ public class FormationController {
     private final InscriptionService inscriptionService;
 
     @PostMapping
-    public ResponseEntity<FormationResponse> create(@Valid @RequestBody FormationRequest request) {
+    public ResponseEntity<FormationDtos.Response> create(@Valid @RequestBody FormationDtos.Request request) {
         access.requireStaff();
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(formationService.create(request, access.currentUserId()));
     }
 
     @GetMapping
-    public ResponseEntity<List<FormationResponse>> listAll() {
+    public ResponseEntity<List<FormationDtos.Response>> listAll() {
         return ResponseEntity.ok(formationService.listAll());
     }
 
     @GetMapping("/stats")
-    public ResponseEntity<FormationStatsResponse> getStats() {
+    public ResponseEntity<FormationDtos.Stats> getStats() {
         return ResponseEntity.ok(formationService.getStats());
     }
 
@@ -78,7 +76,7 @@ public class FormationController {
 
     /** Attach or replace the formation illustration. Admins and trainers only. */
     @PostMapping("/{id}/image")
-    public ResponseEntity<FormationResponse> uploadImage(
+    public ResponseEntity<FormationDtos.Response> uploadImage(
         @PathVariable Long id,
         @RequestParam("file") MultipartFile file) {
         access.requireCanEdit(id);
@@ -113,7 +111,7 @@ public class FormationController {
 
     /** Which formations one user is enrolled in. Admin only. */
     @GetMapping("/inscriptions/utilisateur/{userId}")
-    public ResponseEntity<List<FormationResponse>> formationsOfUser(@PathVariable Long userId) {
+    public ResponseEntity<List<FormationDtos.Response>> formationsOfUser(@PathVariable Long userId) {
         return ResponseEntity.ok(
             inscriptionService.formationsOfUser(userId).stream()
                 .map(formationService::toResponse)
@@ -146,13 +144,13 @@ public class FormationController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<FormationResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<FormationDtos.Response> getById(@PathVariable Long id) {
         return ResponseEntity.ok(formationService.getById(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<FormationResponse> update(@PathVariable Long id,
-                                                    @Valid @RequestBody FormationRequest request) {
+    public ResponseEntity<FormationDtos.Response> update(@PathVariable Long id,
+                                                    @Valid @RequestBody FormationDtos.Request request) {
         access.requireCanEdit(id);
         return ResponseEntity.ok(formationService.update(id, request));
     }

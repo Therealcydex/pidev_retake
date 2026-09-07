@@ -14,9 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import tn.esprit.formation.dto.FormationRequest;
-import tn.esprit.formation.dto.FormationResponse;
-import tn.esprit.formation.dto.FormationStatsResponse;
+import tn.esprit.formation.dto.FormationDtos;
 import tn.esprit.formation.entity.Categorie;
 import tn.esprit.formation.entity.Chapitre;
 import tn.esprit.formation.entity.Formation;
@@ -51,7 +49,7 @@ public class FormationService {
     private final ChapitreRepository chapitreRepository;
     private final InscriptionRepository inscriptionRepository;
 
-    public FormationResponse create(FormationRequest request, Long ownerId) {
+    public FormationDtos.Response create(FormationDtos.Request request, Long ownerId) {
         Categorie categorie = categorieRepository.findById(request.getCategorieId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Catégorie not found"));
 
@@ -67,19 +65,19 @@ public class FormationService {
         return toResponse(saved);
     }
 
-    public List<FormationResponse> listAll() {
+    public List<FormationDtos.Response> listAll() {
         return formationRepository.findAll().stream()
             .map(this::toResponse)
             .toList();
     }
 
-    public FormationResponse getById(Long id) {
+    public FormationDtos.Response getById(Long id) {
         Formation formation = formationRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Formation not found"));
         return toResponse(formation);
     }
 
-    public FormationResponse update(Long id, FormationRequest request) {
+    public FormationDtos.Response update(Long id, FormationDtos.Request request) {
         Formation formation = formationRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Formation not found"));
 
@@ -210,7 +208,7 @@ public class FormationService {
         };
     }
 
-    public FormationStatsResponse getStats() {
+    public FormationDtos.Stats getStats() {
         Map<String, Long> byCategorie = new LinkedHashMap<>();
         for (Object[] row : formationRepository.countByCategorie()) {
             byCategorie.put((String) row[0], (Long) row[1]);
@@ -221,7 +219,7 @@ public class FormationService {
             byNiveau.put(((Niveau) row[0]).name(), (Long) row[1]);
         }
 
-        return new FormationStatsResponse(
+        return new FormationDtos.Stats(
             formationRepository.count(),
             byCategorie,
             byNiveau
@@ -229,10 +227,10 @@ public class FormationService {
     }
 
     /** The one mapper: looks up the formation's image filename and chapter count. */
-    public FormationResponse toResponse(Formation f) {
+    public FormationDtos.Response toResponse(Formation f) {
         String imageFilename = imageRepository.findFilenameByFormationId(f.getId()).orElse(null);
 
-        return new FormationResponse(
+        return new FormationDtos.Response(
             f.getId(),
             f.getTitre(),
             f.getDescription(),

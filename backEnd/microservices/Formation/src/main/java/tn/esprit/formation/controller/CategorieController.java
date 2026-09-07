@@ -11,36 +11,60 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import tn.esprit.formation.dto.CategorieRequest;
-import tn.esprit.formation.dto.CategorieResponse;
-import tn.esprit.formation.service.CategorieService;
+import org.springframework.web.server.ResponseStatusException;
+import tn.esprit.formation.dto.CategorieDtos;
+import tn.esprit.formation.entity.Categorie;
+import tn.esprit.formation.repository.CategorieRepository;
+import tn.esprit.formation.service.FormationAccessService;
 
 import java.util.List;
 
+/**
+ * Categories are a flat lookup table: a name and an id, with no rule of their own beyond
+ * who may change them. There was a service layer in between, but it only forwarded to the
+ * repository, so the controller talks to it directly.
+ */
 @RestController
 @RequestMapping("/categories")
 @RequiredArgsConstructor
 public class CategorieController {
-    private final CategorieService categorieService;
+    private final CategorieRepository categorieRepository;
+    private final FormationAccessService access;
 
     @PostMapping
-    public ResponseEntity<CategorieResponse> create(@RequestBody CategorieRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(categorieService.create(request));
+    public ResponseEntity<CategorieDtos.Response> create(@RequestBody CategorieDtos.Request request) {
+        access.requireAdmin();
+
+        Categorie categorie = new Categorie();
+        categorie.setNom(request.getNom());
+        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(categorieRepository.save(categorie)));
     }
 
+    /** Public on purpose: the formation form needs it to fill its dropdown. */
     @GetMapping
-    public ResponseEntity<List<CategorieResponse>> listAll() {
-        return ResponseEntity.ok(categorieService.listAll());
+    public ResponseEntity<List<CategorieDtos.Response>> listAll() {
+        return ResponseEntity.ok(categorieRepository.findAll().stream().map(this::toResponse).toList());
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CategorieResponse> update(@PathVariable Long id, @RequestBody CategorieRequest request) {
-        return ResponseEntity.ok(categorieService.update(id, request));
+    public ResponseEntity<CategorieDtos.Response> update(@PathVariable Long id,
+                                                         @RequestBody CategorieDtos.Request request) {
+        access.requireAdmin();
+
+        Categorie categorie = categorieRepository.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Catégorie not found"));
+        categorie.setNom(request.getNom());
+        return ResponseEntity.ok(toResponse(categorieRepository.save(categorie)));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        categorieService.delete(id);
+        access.requireAdmin();
+        categorieRepository.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private CategorieDtos.Response toResponse(Categorie c) {
+        return new CategorieDtos.Response(c.getId(), c.getNom());
     }
 }
